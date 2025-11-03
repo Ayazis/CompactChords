@@ -1,0 +1,107 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  background-color: #f9fafb;
+}
+
+body {
+  margin: 0;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(180deg, #f9fafb 0%, #eef2f7 100%);
+  color: #111827;
+}
+
+.app {
+  width: min(720px, 100%);
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.app__title {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.app__subtitle {
+  margin: 0.25rem 0 0;
+  color: #4b5563;
+}
+
+.field__label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.field__control {
+  width: 100%;
+  font: inherit;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+  resize: vertical;
+}
+
+.field__control:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.button {
+  align-self: flex-end;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(120deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.25);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.result {
+  margin: 0;
+  padding: 1.5rem;
+  min-height: 160px;
+  background-color: #f1f5f9;
+  border-radius: 12px;
+  border: 1px dashed #cbd5f5;
+  white-space: pre-wrap;
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 1.25rem;
+  }
+
+  .app {
+    padding: 1.75rem;
+  }
+
+  .button {
+    align-self: stretch;
+  }
+}

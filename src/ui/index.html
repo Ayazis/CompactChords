@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CompactChords</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <h1 class="app__title">CompactChords</h1>
+        <p class="app__subtitle">Paste your song, then process it to see the parsed output.</p>
+      </header>
+
+      <section class="app__input">
+        <label class="field__label" for="inputField">Song text</label>
+        <textarea
+          id="inputField"
+          class="field__control field__control--multiline"
+          placeholder="Paste chords and lyrics here"
+          rows="8"
+        ></textarea>
+        <button id="processButton" class="button" type="button">Process</button>
+      </section>
+
+      <section class="app__output">
+        <h2 class="field__label" id="resultLabel">Result</h2>
+        <pre id="resultField" class="result" aria-live="polite" aria-labelledby="resultLabel">
+Ready when you are.
+        </pre>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
