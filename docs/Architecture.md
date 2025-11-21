@@ -3,6 +3,12 @@
 ## Overview
 Pure-core pipeline plus thin UI shell. No runtime services.
 
+## Product constraints
+- Native JavaScript only; no additional frameworks or runtime services.
+- UX flow is paste → auto-format → print/save PDF.
+- Initial release targets English lyrics and chord naming.
+- Built-in transposition is a planned enhancement.
+
 ## Module boundaries
 - `tokenizer`
   - Input: raw line. Output: tokens (word, symbol). Pure.
@@ -23,23 +29,6 @@ Pure-core pipeline plus thin UI shell. No runtime services.
 - `platform`
   - Clipboard paste, file open, print trigger.
 
-## Data contracts
-- Line
-  ```
-  { id: string, raw: string, tokens: Token[], kind: "Chord"|"Lyric"|"Blank", confidence: number }
-  ```
-- Block
-  ```
-  { id: string, lines: Line[], meta: { showChords: boolean } }
-  ```
-- Document
-  ```
-  { blocks: Block[] }
-  ```
-- UI Settings
-  ```
-  { chordPx: number, lyricPx: number, columns: 2, marginMm: 12 }
-  ```
 
 ## Algorithms
 - Chord token regex: define once in `chord-grammar`. Allow roots A–G, accidentals `#|b|♯|♭`, suffixes `m|min|maj|dim|aug|sus(2|4)|add(9|11|13)|6|7|9|11|13`, optional slash bass.
