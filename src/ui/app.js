@@ -3,6 +3,7 @@ import { processSong } from "../app/app.js";
 const inputField = document.getElementById("inputField");
 const processButton = document.getElementById("processButton");
 const resultField = document.getElementById("resultField");
+const fixturePath = "../fixtures/shapeofyou.md";
 
 const createSummaryElement = (stats) => {
   const summary = document.createElement("p");
@@ -87,3 +88,25 @@ processButton?.addEventListener("click", processInput);
 inputField?.addEventListener("input", requestProcess);
 
 renderEmptyState();
+
+const loadDefaultInput = async () => {
+  if (!inputField) {
+    return;
+  }
+
+  try {
+    const response = await fetch(fixturePath);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch fixture: ${response.status}`);
+    }
+
+    const text = await response.text();
+    inputField.value = text;
+    processInput();
+  } catch (error) {
+    // Leave the empty state in place if the fixture cannot be loaded.
+    console.error(error);
+  }
+};
+
+loadDefaultInput();
