@@ -1,7 +1,16 @@
 import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { cacheKey, listedSongs, precompute, readCached } from '../../server/saved-songs';
+import { readFile } from 'node:fs/promises';
+import {
+  cacheKey,
+  libraryExportPath,
+  listedSongs,
+  precompute,
+  readCached,
+  writeLibraryExport,
+} from '../../server/saved-songs';
+import { DEFAULT_SHEET_SETTINGS, parseLibraryFile } from '../../src/core/songs';
 
 const SONG_A = 'https://tabs.ultimate-guitar.com/tab/example-band/paper-lanterns-chords-101';
 const SONG_B = 'https://tabs.ultimate-guitar.com/tab/other-band/harbour-light-chords-202';
@@ -66,6 +75,34 @@ describe('precompute', () => {
     await writeFile(join(root, 'urls', 'set.txt'), `${SONG_B}\n`);
     await precompute(root, { fetchHtml: fakeFetch, delayMs: 0 });
     expect(await readdir(join(root, 'urls', 'cache'))).toEqual([]);
+  });
+});
+
+describe('writeLibraryExport', () => {
+  it('writes the cached songs as a library file the app can import', async () => {
+    await precompute(root, { fetchHtml: fakeFetch, delayMs: 0 });
+    expect(await writeLibraryExport(root)).toBe(1);
+
+    const parsed = parseLibraryFile(JSON.parse(await readFile(libraryExportPath(root), 'utf8')));
+    expect(parsed?.skipped).toBe(0);
+    expect(parsed?.songs).toEqual([
+      {
+        id: 'example-band__paper-lanterns-chords-101',
+        url: SONG_A,
+        title: 'Paper Lanterns',
+        details: '',
+        text: 'G\nWords',
+        settings: DEFAULT_SHEET_SETTINGS,
+        savedAt: expect.any(String),
+      },
+    ]);
+  });
+
+  it('survives the next precompute run', async () => {
+    await precompute(root, { fetchHtml: fakeFetch, delayMs: 0 });
+    await writeLibraryExport(root);
+    await precompute(root, { fetchHtml: fakeFetch, delayMs: 0 });
+    expect(await readdir(join(root, 'urls', 'cache'))).toContain('library.json');
   });
 });
 

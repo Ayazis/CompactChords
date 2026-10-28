@@ -10,9 +10,11 @@ import {
   isUltimateGuitarUrl,
   labelFromUrl,
   parseUrlList,
+  sheetDetails,
+  sheetTitle,
   type ImportedSheet,
 } from '../src/core/importers/ultimate-guitar';
-import { songIdForUrl } from '../src/core/songs';
+import { DEFAULT_SHEET_SETTINGS, libraryFile, songIdForUrl, type StoredSong } from '../src/core/songs';
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
@@ -36,6 +38,10 @@ export type FetchHtml = (url: string) => Promise<string>;
 
 export const urlsDir = (root: string) => join(root, 'urls');
 const cacheDir = (root: string) => join(urlsDir(root), 'cache');
+
+/** All cached songs as one library file, to load with "Import file" on any copy of the app. */
+export const LIBRARY_EXPORT = 'library.json';
+export const libraryExportPath = (root: string) => join(cacheDir(root), LIBRARY_EXPORT);
 
 /** File name for a link: "the-hollies__long-cool-woman-…-chords-848040.json". */
 export function cacheKey(url: string): string {
@@ -131,9 +137,35 @@ export async function precompute(root: string, options: PrecomputeOptions = {}):
     onResult?.(result);
   }
 
-  const keep = new Set(urls.map(cacheKey));
+  const keep = new Set([...urls.map(cacheKey), LIBRARY_EXPORT]);
   for (const file of await readdir(dir)) {
     if (file.endsWith('.json') && !keep.has(file)) await rm(join(dir, file));
   }
   return results;
+}
+
+/**
+ * Writes every cached saved song to urls/cache/library.json in the app's
+ * library format. Importing it on the deployed (static) site puts the songs
+ * in that browser's private library, without publishing any lyrics.
+ */
+export async function writeLibraryExport(root: string): Promise<number> {
+  const urls = [...new Set((await savedUrls(root)).map((saved) => saved.url))];
+  const songs: StoredSong[] = [];
+  for (const url of urls) {
+    const cached = await readCached(root, url);
+    if (!cached) continue;
+    songs.push({
+      id: songIdForUrl(url),
+      url,
+      title: sheetTitle(cached) || labelFromUrl(url),
+      details: sheetDetails(cached),
+      text: cached.text,
+      settings: structuredClone(DEFAULT_SHEET_SETTINGS),
+      savedAt: cached.fetchedAt,
+    });
+  }
+  await mkdir(cacheDir(root), { recursive: true });
+  await writeFile(libraryExportPath(root), `${JSON.stringify(libraryFile(songs), null, 2)}\n`);
+  return songs.length;
 }

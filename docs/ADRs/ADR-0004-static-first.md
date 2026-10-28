@@ -9,6 +9,7 @@ CompactChords is meant to be hosted as static files (for example on GitHub Pages
 - **Bookmarklet for Ultimate Guitar.** "Send to CompactChords" (`src/platform/bookmarklet.ts`) runs on the Ultimate Guitar page itself, where the chord data is already loaded. It opens the app with the sheet in the URL fragment (`#import=…`). Fragments are never sent to a server, so this works from any static host. The app treats the payload as untrusted and checks it with `sheetFromShared` before use.
 - **Relative asset paths** (`base: './'` in Vite) so `dist/` works from any folder or sub-path.
 - **The local server becomes optional.** Link import and the `urls/*.txt` lists remain dev-only conveniences, and the UI hides them when `/api/lists` is unavailable.
+- **Saved links reach the deployed site through the library file, not the build.** `npm run precompute` writes `urls/cache/library.json` (git-ignored) in the export format; importing it on the deployed site fills that browser's library. The pre-computed sheets are never bundled into `dist/`, because the site is public and they contain copyrighted lyrics.
 
 ## Consequences
 - A library is per browser and per origin. Clearing site data deletes it, which the UI points out next to the export button.

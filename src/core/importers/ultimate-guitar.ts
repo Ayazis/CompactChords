@@ -106,6 +106,16 @@ export interface SharedSheet extends ImportedSheet {
   url?: string;
 }
 
+/** "Artist – Song" for the sheet heading. */
+export function sheetTitle(sheet: ImportedSheet): string {
+  return [sheet.artist, sheet.title].filter(Boolean).join(' – ');
+}
+
+/** "Capo 2 · Tuning D A D G B E" for the sheet heading. */
+export function sheetDetails(sheet: ImportedSheet): string {
+  return [sheet.capo ? `Capo ${sheet.capo}` : '', sheet.tuning ? `Tuning ${sheet.tuning}` : ''].filter(Boolean).join(' · ');
+}
+
 const MAX_TEXT = 200_000;
 const MAX_NAME = 200;
 

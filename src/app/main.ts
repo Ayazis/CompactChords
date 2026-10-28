@@ -3,7 +3,7 @@
 import '../ui/style.css';
 import example from '../fixtures/example-01.txt?raw';
 import { arrange, format, parseSheet, type Arrangement, type SheetDocument } from '../core';
-import { sheetFromShared, type SharedSheet } from '../core/importers/ultimate-guitar';
+import { sheetDetails, sheetFromShared, sheetTitle, type SharedSheet } from '../core/importers/ultimate-guitar';
 import {
   DEFAULT_SHEET_SETTINGS,
   SIZE_RANGE,
@@ -304,8 +304,8 @@ function openExample(): boolean {
 
 function songFromShared(sheet: SharedSheet): Song {
   const song: Song = {
-    title: [sheet.artist, sheet.title].filter(Boolean).join(' – '),
-    details: [sheet.capo ? `Capo ${sheet.capo}` : '', sheet.tuning ? `Tuning ${sheet.tuning}` : ''].filter(Boolean).join(' · '),
+    title: sheetTitle(sheet),
+    details: sheetDetails(sheet),
     text: sheet.text,
     settings: DEFAULT_SHEET_SETTINGS,
   };

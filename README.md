@@ -31,6 +31,10 @@ Upload `dist/` anywhere (GitHub Pages, Netlify, a folder on a web server). Asset
 - Paste an Ultimate Guitar link into *Import & backup* to import it.
 - Put links in `urls/*.txt` (one per line) to list them in the library. `npm run precompute` fetches them once into `urls/cache/` (git-ignored, as it contains lyrics).
 
+### Getting your saved links onto the deployed site
+
+The deployed site has no server, so it cannot read `urls/`. `npm run precompute` also writes `urls/cache/library.json`. Open the deployed site, go to **Import & backup → Import file** and pick that file: all pre-computed songs land in that browser's library. The lyrics stay in your browser and are never published with the site.
+
 ## Tests
 
 ```bash
