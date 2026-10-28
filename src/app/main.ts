@@ -72,6 +72,7 @@ const capo = $<HTMLSelectElement>('capo');
 const chordSize = $<HTMLInputElement>('chord-size');
 const lyricSize = $<HTMLInputElement>('lyric-size');
 const showTabs = $<HTMLInputElement>('show-tabs');
+const nashville = $<HTMLInputElement>('nashville');
 const urlForm = $<HTMLFormElement>('url-form');
 const urlInput = $<HTMLInputElement>('url');
 const saveButton = $<HTMLButtonElement>('save');
@@ -241,6 +242,7 @@ function syncControls(): void {
   chordSize.value = String(settings.chordPx);
   lyricSize.value = String(settings.lyricPx);
   showTabs.checked = settings.showTabs;
+  nashville.checked = settings.nashville;
   sectionGap.value = String(settings.sectionGap);
   chordColor.value = settings.chordColor === 'auto' ? DEFAULT_CHORD_COLOR : settings.chordColor;
   headerText.value = settings.headerText;
@@ -542,6 +544,7 @@ capo.addEventListener('change', () => changeSettings({ capo: Number(capo.value) 
 chordSize.addEventListener('input', () => changeSettings({ chordPx: Number(chordSize.value) }));
 lyricSize.addEventListener('input', () => changeSettings({ lyricPx: Number(lyricSize.value) }));
 showTabs.addEventListener('change', () => changeSettings({ showTabs: showTabs.checked }));
+nashville.addEventListener('change', () => changeSettings({ nashville: nashville.checked }));
 $('fit').addEventListener('click', fitToPage);
 sectionGap.addEventListener('input', () => changeSettings({ sectionGap: Number(sectionGap.value) }));
 chordColor.addEventListener('input', () => changeSettings({ chordColor: chordColor.value }));

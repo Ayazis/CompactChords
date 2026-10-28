@@ -158,3 +158,14 @@ describe('arrange', () => {
     ]);
   });
 });
+
+describe('nashville numbers', () => {
+  it('converts chords relative to the key, minor keys via the relative major', async () => {
+    const { nashvilleChord } = await import('../../src/core/transpose');
+    expect(nashvilleChord('G', { root: 7, minor: false })).toBe('1');
+    expect(nashvilleChord('Em7', { root: 7, minor: false })).toBe('6m7');
+    expect(nashvilleChord('D/F#', { root: 7, minor: false })).toBe('5/7');
+    expect(nashvilleChord('Bb', { root: 7, minor: false })).toBe('b3');
+    expect(nashvilleChord('Am', { root: 9, minor: true })).toBe('6m');
+  });
+});

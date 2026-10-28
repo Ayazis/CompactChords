@@ -59,6 +59,40 @@ export function transposeDocument(doc: SheetDocument, semitones: number, flats: 
   };
 }
 
+const DEGREES = ['1', 'b2', '2', 'b3', '3', '4', 'b5', '5', 'b6', '6', 'b7', '7'];
+
+/**
+ * Rewrites a chord as a Nashville number relative to a key. Minor keys count
+ * from their relative major, so Am in A minor is 6m.
+ */
+export function nashvilleChord(token: string, key: Key): string {
+  const parts = parseChord(token);
+  if (!parts) return token;
+  const tonic = key.minor ? mod12(key.root + 3) : key.root;
+  const degree = (note: string) => DEGREES[mod12(noteIndex(note) - tonic)]!;
+  return `${parts.lead}${degree(parts.root)}${parts.quality}${parts.bass ? `/${degree(parts.bass)}` : ''}${parts.trail}`;
+}
+
+/** Replaces every chord with its Nashville number, re-spacing like transposeLine. */
+export function nashvilleDocument(doc: SheetDocument, key: Key): SheetDocument {
+  return {
+    blocks: doc.blocks.map((block) => ({
+      ...block,
+      lines: block.lines.map((line) => {
+        if (line.kind !== 'Chord') return line;
+        let raw = '';
+        const tokens = line.tokens.map((token) => {
+          const text = nashvilleChord(token.text, key);
+          const start = raw.length === 0 ? token.start : Math.max(token.start, raw.length + 1);
+          raw = raw.padEnd(start) + text;
+          return { text, start };
+        });
+        return { ...line, raw, tokens };
+      }),
+    })),
+  };
+}
+
 type Triad = 'maj' | 'min' | 'dim';
 
 function triadOf(chord: ChordParts): Triad {
