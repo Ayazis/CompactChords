@@ -1,0 +1,39 @@
+name: PR preview
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pr-preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    # Fork PRs get a read-only token and cannot publish a preview.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 22
+          cache: npm
+
+      - if: github.event.action != 'closed'
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      # Publishes dist/ to gh-pages under pr-preview/pr-<number>/ and comments the link
+      # on the PR; when the PR closes, the preview is removed again.
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./dist
