@@ -15,7 +15,7 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - `chord-grammar`
   - Chord token regex, `parseChord` (root, quality, bass), headers and tab staff detection.
 - `normalizer`
-  - Maps Unicode sharps/flats, expands tabs, trims line ends, strips Ultimate Guitar markup. Keeps inner spacing for alignment.
+  - Maps Unicode sharps/flats, expands tabs, trims line ends, strips tab-site markup. Keeps inner spacing for alignment.
 - `classifier`
   - Inputs: tokens per line; Outputs: `Chord|Lyric|Blank|Header|Tab` with score. Uses ratio and grammar hits. Threshold configurable.
 - `segmenter`
@@ -29,7 +29,7 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - `songs`
   - `StoredSong` and `SheetSettings` contracts, validation of untrusted data, song ids, library file format and merging. Pure.
 - `importers`
-  - Pure extractors from source pages and bookmarklet payloads to plain chord-sheet text (Ultimate Guitar today).
+  - Pure extractors from source pages and bookmarklet payloads to plain chord-sheet text (one tab site today).
 - `app`
   - State `{song, dirty, library, lists, doc, arrangement}`; wires events to core, storage and renderers.
 - `ui`
@@ -78,13 +78,13 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 
 ## Extensibility points
 - Replace grammar via config.
-- More importers next to `importers/ultimate-guitar.ts` (each a pure function to plain text).
+- More importers next to `importers/tab-site.ts` (each a pure function to plain text).
 - New per-song settings: add to `SheetSettings` with a default and a rule in `songs.ts`; older saves pick up the default.
 
 ## ADR references
 - ADR-0001 Choose CSS columns + browser print over PDF library.
 - ADR-0002 Pure-core vs UI separation.
-- ADR-0003 Import from Ultimate Guitar links (local server, pre-computed cache).
+- ADR-0003 Import from tab-site links (local server, pre-computed cache).
 - ADR-0004 Static-first: browser library, export/import, bookmarklet.
 
 ## Separation of concerns principles

@@ -17,6 +17,13 @@ export interface SheetSettings {
   hiddenBlocks: string[];
   /** Ids of blocks printed without chords. */
   chordlessBlocks: string[];
+  /** "auto" follows the theme; otherwise a #rrggbb colour for chords. */
+  chordColor: 'auto' | string;
+  /** Space between sections, in em of the lyric size. */
+  sectionGap: number;
+  /** Fixed text above and below the sheet; "{date}" becomes today's date. */
+  headerText: string;
+  footerText: string;
 }
 
 export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
@@ -29,13 +36,19 @@ export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
   accidentals: 'auto',
   hiddenBlocks: [],
   chordlessBlocks: [],
+  chordColor: 'auto',
+  sectionGap: 0.8,
+  headerText: '',
+  footerText: '',
 };
 
 export const SIZE_RANGE = { min: 6, max: 24 };
+export const SECTION_GAP_RANGE = { min: 0, max: 3 };
+export const BANNER_MAX = 200;
 
 export interface StoredSong {
   id: string;
-  /** Ultimate Guitar link the song came from, if any. */
+  /** Tab-site link the song came from, if any. */
   url?: string;
   title: string;
   details: string;
@@ -46,6 +59,7 @@ export interface StoredSong {
 
 /** Ids double as storage keys and file names, so they are restricted to safe characters. */
 export const SONG_ID = /^[a-z0-9][a-z0-9_-]{0,150}$/;
+const MAX_ID = 150;
 
 const slug = (text: string) =>
   text
@@ -55,15 +69,26 @@ const slug = (text: string) =>
     .replace(/[^a-z0-9-]+/g, '__')
     .replace(/^_+|_+$/g, '');
 
-/** "the-hollies__long-cool-woman-…-chords-848040" for an Ultimate Guitar link. */
+/** "the-hollies__long-cool-woman-…-chords-848040" for a tab-site link. */
 export function songIdForUrl(url: string): string {
-  return slug(new URL(url).pathname.replace(/^\/tab\//, ''));
+  return slug(new URL(url).pathname.replace(/^\/tab\//, '')).slice(0, MAX_ID).replace(/_+$/, '');
 }
 
 /** Id for a pasted song, from its title: "my__artist__song". */
 export function songIdForTitle(title: string): string | undefined {
-  const base = slug(title.replace(/[–—]/g, ' '));
-  return base ? `my__${base}`.slice(0, 150) : undefined;
+  const trimmed = title.trim();
+  if (!trimmed) return undefined;
+  const base = slug(trimmed.replace(/[–—]/g, ' '));
+  if (base) return `my__${base}`.slice(0, MAX_ID).replace(/_+$/, '');
+  // Titles without Latin letters or digits (e.g. Japanese) get a stable hash instead.
+  return /[\p{L}\p{N}]/u.test(trimmed) ? `my__${hash(trimmed)}` : undefined;
+}
+
+/** Short stable hash (FNV-1a) as base 36. */
+function hash(text: string): string {
+  let value = 0x811c9dc5;
+  for (const char of text) value = Math.imul(value ^ char.codePointAt(0)!, 0x01000193) >>> 0;
+  return value.toString(36);
 }
 
 const isInt = (value: unknown, min: number, max: number): value is number =>
@@ -72,6 +97,8 @@ const isSize = (value: unknown): value is number =>
   typeof value === 'number' && value >= SIZE_RANGE.min && value <= SIZE_RANGE.max;
 const isBlockIds = (value: unknown): value is string[] =>
   Array.isArray(value) && value.length <= 500 && value.every((id) => typeof id === 'string' && /^B\d{1,4}$/.test(id));
+
+const isBanner = (value: unknown): value is string => typeof value === 'string' && value.length <= BANNER_MAX;
 
 const RULES: { [K in keyof SheetSettings]: (value: unknown) => boolean } = {
   chordPx: isSize,
@@ -83,6 +110,10 @@ const RULES: { [K in keyof SheetSettings]: (value: unknown) => boolean } = {
   accidentals: (value) => value === 'auto' || value === 'sharp' || value === 'flat',
   hiddenBlocks: isBlockIds,
   chordlessBlocks: isBlockIds,
+  chordColor: (value) => value === 'auto' || (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)),
+  sectionGap: (value) => typeof value === 'number' && value >= SECTION_GAP_RANGE.min && value <= SECTION_GAP_RANGE.max,
+  headerText: isBanner,
+  footerText: isBanner,
 };
 
 /**

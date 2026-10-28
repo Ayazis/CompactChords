@@ -19,7 +19,7 @@ describe('normalizer', () => {
     expect(normalizeLine('G  D')).toBe('G  D');
   });
 
-  it('strips Ultimate Guitar markup', () => {
+  it('strips tab-site markup', () => {
     expect(stripMarkup('[tab][ch]G[/ch]   [ch]D[/ch]\nWords[/tab]')).toBe('G   D\nWords');
   });
 

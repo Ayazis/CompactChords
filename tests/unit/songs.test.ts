@@ -1,3 +1,4 @@
+import { TAB_ORIGIN } from '../../src/core/importers/tab-site';
 import {
   DEFAULT_SHEET_SETTINGS,
   libraryFile,
@@ -21,6 +22,10 @@ const settings = {
   accidentals: 'flat',
   hiddenBlocks: ['B2'],
   chordlessBlocks: ['B0', 'B4'],
+  chordColor: '#aa3366',
+  sectionGap: 1.5,
+  headerText: 'The Band',
+  footerText: '{date}',
 };
 
 const valid = {
@@ -33,8 +38,8 @@ const valid = {
 };
 
 describe('song ids', () => {
-  it('derives an id from an Ultimate Guitar link', () => {
-    expect(songIdForUrl('https://tabs.ultimate-guitar.com/tab/the-hollies/long-cool-woman-chords-848040')).toBe(
+  it('derives an id from an tab-site link', () => {
+    expect(songIdForUrl(`${TAB_ORIGIN}/tab/the-hollies/long-cool-woman-chords-848040`)).toBe(
       'the-hollies__long-cool-woman-chords-848040',
     );
   });
@@ -45,7 +50,7 @@ describe('song ids', () => {
   });
 
   it('only produces ids that are safe storage keys', () => {
-    for (const id of [songIdForTitle('../../etc/passwd')!, songIdForUrl('https://tabs.ultimate-guitar.com/tab/a/..%2F..%2Fb')]) {
+    for (const id of [songIdForTitle('../../etc/passwd')!, songIdForUrl(`${TAB_ORIGIN}/tab/a/..%2F..%2Fb`)]) {
       expect(id).toMatch(SONG_ID);
     }
     expect(SONG_ID.test('../x')).toBe(false);
@@ -92,10 +97,10 @@ describe('parseStoredSong', () => {
 
   it('keeps the source link and fills in missing details', () => {
     const { details: _details, ...withoutDetails } = valid;
-    expect(parseStoredSong({ ...withoutDetails, url: 'https://tabs.ultimate-guitar.com/tab/a/b' })).toEqual({
+    expect(parseStoredSong({ ...withoutDetails, url: `${TAB_ORIGIN}/tab/a/b` })).toEqual({
       ...valid,
       details: '',
-      url: 'https://tabs.ultimate-guitar.com/tab/a/b',
+      url: `${TAB_ORIGIN}/tab/a/b`,
     });
   });
 

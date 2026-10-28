@@ -2,8 +2,8 @@
 
 const ROOT = '[A-G](?:#|b)?';
 const QUALITY = '(?:maj|min|m|M|dim|aug|sus|add|\\+|°|ø|-)?';
-const EXTENSION = '(?:\\d{1,2})?';
-const ALTERATIONS = '(?:(?:maj|sus|add|no|b|#|\\+|-)\\d{1,2})*';
+const EXTENSION = '(?:6\\/9|\\d{1,2})?';
+const ALTERATIONS = '(?:(?:maj|sus|add|no|b|#|\\+|-)\\d{1,2}|sus)*';
 const PARENTHESISED = '(?:\\((?:(?:maj|sus|add|no|b|#)?\\d{1,2},?)+\\))?';
 const BASS = `(?:\\/${ROOT})?`;
 

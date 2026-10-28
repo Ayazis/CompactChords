@@ -1,4 +1,4 @@
-// "Send to CompactChords" bookmarklet. Run on an Ultimate Guitar tab page, it
+// "Send to CompactChords" bookmarklet. Run on a tab-site page, it
 // reads the chord sheet from the page and opens the app with it in the URL
 // fragment (#import=…). Fragments never reach a server, and no backend is
 // needed, so this works when the app is hosted as static files.

@@ -1,5 +1,5 @@
 /** @jest-environment jsdom */
-import { sheetFromShared } from '../../src/core/importers/ultimate-guitar';
+import { sheetFromShared } from '../../src/core/importers/tab-site';
 import { bookmarkletHref, IMPORT_HASH, takeImportPayload } from '../../src/platform/bookmarklet';
 
 const APP = 'https://example.github.io/compact-chords/';
@@ -26,7 +26,7 @@ function runBookmarklet(): string | undefined {
 }
 
 describe('bookmarklet', () => {
-  it('sends the chord sheet on an Ultimate Guitar page to the app', () => {
+  it('sends the chord sheet on an tab-site page to the app', () => {
     ugPage({
       tab: { song_name: 'Paper Lanterns', artist_name: 'Example Band' },
       tab_view: { wiki_tab: { content: '[ch]G[/ch]\nWords & "quotes"' }, meta: { capo: 2, tuning: { value: 'E A D G B E' } } },

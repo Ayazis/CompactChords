@@ -1,8 +1,8 @@
 // Fetches every link in urls/*.txt once and stores the parsed sheet in
-// urls/cache, so the app can open saved songs without contacting Ultimate Guitar.
+// urls/cache, so the app can open saved songs without contacting the tab site.
 // Usage: npm run precompute [-- --force]
 
-import { labelFromUrl } from '../src/core/importers/ultimate-guitar';
+import { labelFromUrl } from '../src/core/importers/tab-site';
 import { precompute } from '../server/saved-songs';
 
 const force = process.argv.includes('--force');

@@ -1,13 +1,13 @@
 // Optional helpers served by the local dev/preview server. The app works
 // without them (static hosting); they only add:
-// - GET /api/import?url=… — the chord sheet for an Ultimate Guitar link, from
+// - GET /api/import?url=… — the chord sheet for a tab-site link, from
 //   urls/cache when pre-computed, otherwise fetched here (browsers cannot
 //   fetch the page directly because of CORS).
 // - GET /api/lists — the links saved in urls/*.txt.
 
 import type { Connect, Plugin } from 'vite';
-import { extractUltimateGuitar, ImportError, isUltimateGuitarUrl } from '../src/core/importers/ultimate-guitar';
-import { fetchUltimateGuitarHtml, listedSongs, readCached } from './saved-songs';
+import { extractSheet, ImportError, isSupportedUrl } from '../src/core/importers/tab-site';
+import { fetchSheetHtml, listedSongs, readCached } from './saved-songs';
 
 type Response = Parameters<Connect.NextHandleFunction>[1];
 
@@ -18,15 +18,15 @@ function send(res: Response, status: number, body: unknown) {
 }
 
 async function importSheet(root: string, target: string, res: Response) {
-  if (!isUltimateGuitarUrl(target)) {
-    return send(res, 400, { error: 'Only https://tabs.ultimate-guitar.com links are supported.' });
+  if (!isSupportedUrl(target)) {
+    return send(res, 400, { error: 'Only links from the supported tab site can be imported.' });
   }
 
   const cached = await readCached(root, target);
   if (cached) return send(res, 200, cached);
 
   try {
-    send(res, 200, extractUltimateGuitar(await fetchUltimateGuitarHtml(target)));
+    send(res, 200, extractSheet(await fetchSheetHtml(target)));
   } catch (error) {
     if (error instanceof ImportError) return send(res, 422, { error: error.message });
     send(res, 502, { error: `Could not load the page: ${(error as Error).message}` });

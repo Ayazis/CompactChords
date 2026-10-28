@@ -1,7 +1,7 @@
 // Browser side effects: the optional local server and printing.
 // Everything here degrades gracefully when the app runs as static files.
 
-import type { ImportedSheet } from '../core/importers/ultimate-guitar';
+import type { ImportedSheet } from '../core/importers/tab-site';
 
 async function request<T>(path: string): Promise<T> {
   const response = await fetch(path);

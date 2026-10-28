@@ -3,7 +3,7 @@
 
 const TAB_WIDTH = 4;
 
-/** Removes Ultimate Guitar markup ([ch]G[/ch], [tab]…[/tab]) keeping the inner text. */
+/** Removes tab-site markup ([ch]G[/ch], [tab]…[/tab]) keeping the inner text. */
 export function stripMarkup(text: string): string {
   return text.replace(/\[\/?(?:ch|tab)\]/g, '');
 }
@@ -22,7 +22,7 @@ export function normalizeLine(line: string): string {
       .normalize('NFC')
       .replace(/♯/g, '#')
       .replace(/♭/g, 'b')
-      .replace(/[   ]/g, ' ')
+      .replace(/\p{Zs}/gu, ' ')
       .replace(/\r/g, ''),
   ).trimEnd();
 }
