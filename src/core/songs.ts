@@ -35,7 +35,7 @@ export const SIZE_RANGE = { min: 6, max: 24 };
 
 export interface StoredSong {
   id: string;
-  /** Ultimate Guitar link the song came from, if any. */
+  /** Tab-site link the song came from, if any. */
   url?: string;
   title: string;
   details: string;
@@ -46,6 +46,7 @@ export interface StoredSong {
 
 /** Ids double as storage keys and file names, so they are restricted to safe characters. */
 export const SONG_ID = /^[a-z0-9][a-z0-9_-]{0,150}$/;
+const MAX_ID = 150;
 
 const slug = (text: string) =>
   text
@@ -55,15 +56,26 @@ const slug = (text: string) =>
     .replace(/[^a-z0-9-]+/g, '__')
     .replace(/^_+|_+$/g, '');
 
-/** "the-hollies__long-cool-woman-…-chords-848040" for an Ultimate Guitar link. */
+/** "the-hollies__long-cool-woman-…-chords-848040" for a tab-site link. */
 export function songIdForUrl(url: string): string {
-  return slug(new URL(url).pathname.replace(/^\/tab\//, ''));
+  return slug(new URL(url).pathname.replace(/^\/tab\//, '')).slice(0, MAX_ID).replace(/_+$/, '');
 }
 
 /** Id for a pasted song, from its title: "my__artist__song". */
 export function songIdForTitle(title: string): string | undefined {
-  const base = slug(title.replace(/[–—]/g, ' '));
-  return base ? `my__${base}`.slice(0, 150) : undefined;
+  const trimmed = title.trim();
+  if (!trimmed) return undefined;
+  const base = slug(trimmed.replace(/[–—]/g, ' '));
+  if (base) return `my__${base}`.slice(0, MAX_ID).replace(/_+$/, '');
+  // Titles without Latin letters or digits (e.g. Japanese) get a stable hash instead.
+  return /[\p{L}\p{N}]/u.test(trimmed) ? `my__${hash(trimmed)}` : undefined;
+}
+
+/** Short stable hash (FNV-1a) as base 36. */
+function hash(text: string): string {
+  let value = 0x811c9dc5;
+  for (const char of text) value = Math.imul(value ^ char.codePointAt(0)!, 0x01000193) >>> 0;
+  return value.toString(36);
 }
 
 const isInt = (value: unknown, min: number, max: number): value is number =>

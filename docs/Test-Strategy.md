@@ -3,6 +3,8 @@
 ## Levels
 - Unit (core modules): deterministic, property-based where useful.
 - Integration (app state → DOM snapshot): fixtures render, print CSS presence.
+- App (`tests/app`): the real `src/app/main.ts` booted against `index.html` in jsdom and driven like a user (open, edit, save, delete, transpose, capo, sections, fit to page, backup/restore, bookmarklet and link import, shortcuts, drawers).
+- Server/platform (`tests/integration/server`, `platform`): the dev-server endpoints, the fetch allow-list, pre-computed cache, and the browser-side helpers.
 - Visual (optional): screenshot diff for two-column layout.
 
 ## Property tests

@@ -5,13 +5,13 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import {
-  extractUltimateGuitar,
+  extractSheet,
   ImportError,
-  isUltimateGuitarUrl,
+  isSupportedUrl,
   labelFromUrl,
   parseUrlList,
   type ImportedSheet,
-} from '../src/core/importers/ultimate-guitar';
+} from '../src/core/importers/tab-site';
 import { songIdForUrl } from '../src/core/songs';
 
 const USER_AGENT =
@@ -42,15 +42,15 @@ export function cacheKey(url: string): string {
   return `${songIdForUrl(url)}.json`;
 }
 
-/** Fetches an Ultimate Guitar page. Only Ultimate Guitar is allowed so this never becomes an open proxy. */
-export const fetchUltimateGuitarHtml: FetchHtml = async (url) => {
-  if (!isUltimateGuitarUrl(url)) throw new ImportError('Only https://tabs.ultimate-guitar.com links are supported.');
+/** Fetches a tab-site page. Only the supported site is allowed so this never becomes an open proxy. */
+export const fetchSheetHtml: FetchHtml = async (url) => {
+  if (!isSupportedUrl(url)) throw new ImportError('Only links from the supported tab site can be imported.');
   const response = await fetch(url, {
     headers: { 'User-Agent': USER_AGENT, Accept: 'text/html' },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
-  if (!isUltimateGuitarUrl(response.url)) throw new Error('The link redirected away from Ultimate Guitar.');
-  if (!response.ok) throw new Error(`Ultimate Guitar answered with HTTP ${response.status}.`);
+  if (!isSupportedUrl(response.url)) throw new Error('The link redirected away from the tab site.');
+  if (!response.ok) throw new Error(`The tab site answered with HTTP ${response.status}.`);
   return response.text();
 };
 
@@ -96,7 +96,7 @@ export interface PrecomputeOptions {
   /** Re-fetch links that are already cached. */
   force?: boolean;
   fetchHtml?: FetchHtml;
-  /** Pause between requests, to be gentle with Ultimate Guitar. */
+  /** Pause between requests, to be gentle with the tab site. */
   delayMs?: number;
   onResult?: (result: PrecomputeResult) => void;
 }
@@ -106,7 +106,7 @@ export interface PrecomputeOptions {
  * files for links that are no longer saved.
  */
 export async function precompute(root: string, options: PrecomputeOptions = {}): Promise<PrecomputeResult[]> {
-  const { force = false, fetchHtml = fetchUltimateGuitarHtml, delayMs = 500, onResult } = options;
+  const { force = false, fetchHtml = fetchSheetHtml, delayMs = 500, onResult } = options;
   const dir = cacheDir(root);
   await mkdir(dir, { recursive: true });
 
@@ -120,7 +120,7 @@ export async function precompute(root: string, options: PrecomputeOptions = {}):
     } else {
       if (fetched++ > 0 && delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
       try {
-        const sheet: CachedSheet = { url, fetchedAt: new Date().toISOString(), ...extractUltimateGuitar(await fetchHtml(url)) };
+        const sheet: CachedSheet = { url, fetchedAt: new Date().toISOString(), ...extractSheet(await fetchHtml(url)) };
         await writeFile(join(dir, cacheKey(url)), `${JSON.stringify(sheet, null, 2)}\n`);
         result = { url, status: 'fetched' };
       } catch (error) {

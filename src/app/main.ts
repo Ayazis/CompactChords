@@ -3,7 +3,7 @@
 import '../ui/style.css';
 import example from '../fixtures/example-01.txt?raw';
 import { arrange, format, parseSheet, type Arrangement, type SheetDocument } from '../core';
-import { sheetFromShared, type SharedSheet } from '../core/importers/ultimate-guitar';
+import { sheetFromShared, type SharedSheet } from '../core/importers/tab-site';
 import {
   DEFAULT_SHEET_SETTINGS,
   SIZE_RANGE,
@@ -13,7 +13,7 @@ import {
   type StoredSong,
 } from '../core/songs';
 import { importFromUrl, loadListedSongs, printSheet, type ListedSong } from '../platform';
-import { bookmarkletHref, takeImportPayload } from '../platform/bookmarklet';
+import { bookmarkletHref, IMPORT_HASH, takeImportPayload } from '../platform/bookmarklet';
 import { exportLibrary, importLibrary, putSong, readLibrary, removeSong } from '../platform/library';
 import { renderSections, renderSongList, type SongGroup } from '../ui/panels';
 import { DEFAULT_SETTINGS, renderSheet } from '../ui/render';
@@ -145,7 +145,7 @@ function songGroups(): SongGroup[] {
       const detail = summary(song.settings);
       return { key: `song:${song.id}`, label: song.title || 'Untitled', ...(detail ? { detail } : {}) };
     });
-  const groups: SongGroup[] = [{ name: 'My library', entries: mine }];
+  const groups: SongGroup[] = [{ name: 'My library', entries: mine, matchName: false }];
 
   const lists = new Map<string, SongGroup>();
   for (const listed of state.lists ?? []) {
@@ -157,7 +157,7 @@ function songGroups(): SongGroup[] {
         : { key: `link:${listed.url}`, label: listed.label },
     );
   }
-  groups.push(...lists.values(), { name: 'Built-in', entries: [{ key: EXAMPLE_KEY, label: 'Paper Lanterns', detail: 'Example song' }] });
+  groups.push(...lists.values(), { name: 'Built-in', matchName: false, entries: [{ key: EXAMPLE_KEY, label: 'Paper Lanterns', detail: 'Example song' }] });
   return groups;
 }
 
@@ -311,7 +311,9 @@ function songFromShared(sheet: SharedSheet): Song {
   };
   if (sheet.url) {
     song.url = sheet.url;
-    song.id = songIdForUrl(sheet.url);
+    // A link without a song path (the site's home page) has no usable id; a title-based one is made on save.
+    const id = songIdForUrl(sheet.url);
+    if (id) song.id = id;
   }
   return song;
 }
@@ -595,7 +597,7 @@ const bookmarklet = $<HTMLAnchorElement>('bookmarklet');
 bookmarklet.href = bookmarkletHref(location.origin + location.pathname);
 bookmarklet.addEventListener('click', (event) => {
   event.preventDefault();
-  setStatus('Drag this link to your bookmarks bar, then click it on an Ultimate Guitar chord page.');
+  setStatus('Drag this link to your bookmarks bar, then click it on a chord page of the tab site.');
 });
 
 const isTyping = (target: EventTarget | null) =>
@@ -635,18 +637,20 @@ capo.replaceChildren(
   ...Array.from({ length: 12 }, (_, fret) => new Option(fret === 0 ? 'No capo' : `Fret ${fret}`, String(fret))),
 );
 
-/** Opens a song sent by the bookmarklet (#import=…); false when there is none. */
+const BAD_PAYLOAD = 'The bookmarklet did not send a chord sheet.';
+
+/** Opens a song sent by the bookmarklet (#import=…); false when there is none or it was unusable. */
 function openImportPayload(): boolean {
   const payload = takeImportPayload();
   if (payload === undefined) return false;
   const shared = sheetFromShared(payload);
   if (!shared) {
-    setStatus('The bookmarklet did not send a chord sheet.', 'error');
+    setStatus(BAD_PAYLOAD, 'error');
     return false;
   }
   if (!confirmDiscard()) return true;
   openSong(songFromShared(shared));
-  setStatus(`Imported “${shared.title ?? 'song'}” from Ultimate Guitar. Save it to keep it.`, 'ok');
+  setStatus(`Imported “${shared.title ?? 'song'}” from the tab site. Save it to keep it.`, 'ok');
   return true;
 }
 
@@ -656,7 +660,10 @@ window.addEventListener('hashchange', openImportPayload);
 async function start(): Promise<void> {
   state.lists = await loadListedSongs();
   urlForm.hidden = state.lists === undefined;
+  const sentSomething = location.hash.startsWith(IMPORT_HASH);
   if (openImportPayload()) return;
+  // Opening a default song below must not hide that the sent song was unusable.
+  const unusable = sentSomething;
 
   const params = new URLSearchParams(location.search);
   const songParam = params.get('song');
@@ -676,9 +683,14 @@ async function start(): Promise<void> {
     state.lists?.[0] ? `link:${state.lists[0].url}` : undefined,
   ];
   for (const key of candidates) {
-    if (key && (await openKey(key))) return;
+    if (key && (await openKey(key))) return reportUnusable();
   }
   openExample();
+  reportUnusable();
+
+  function reportUnusable(): void {
+    if (unusable) setStatus(BAD_PAYLOAD, 'error');
+  }
 }
 
 void start();

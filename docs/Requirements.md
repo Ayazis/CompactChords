@@ -7,7 +7,7 @@
 - FR-04 Independent chord and lyric font-size controls.
 - FR-05 Print uses the browser dialog with fixed A4 margins and shows only the sheet.
 - FR-06 A built-in example song is always available. With the local server, links in `urls/*.txt` are listed too.
-- FR-07 Import from Ultimate Guitar: with the "Send to CompactChords" bookmarklet on any static host, or by link through the local server (ADR-0003, ADR-0004).
+- FR-07 Import from a tab site: with the "Send to CompactChords" bookmarklet on any static host, or by link through the local server (ADR-0003, ADR-0004).
 - FR-08 Save the open song with its settings (sizes, columns, tablature, transposition, capo, accidentals, section toggles) to a library in the browser, and reopen it with those settings restored. Songs can be removed from the library.
 - FR-09 Transpose ±11 semitones. Lyrics are untouched and chords keep their positions above the lyrics.
 - FR-10 Capo: chords are shown as shapes relative to the capo fret.
@@ -42,6 +42,6 @@
 ## Traceability matrix
 - FR-02 → Unit: classifier.test, chord-grammar.test; Property: random chord noise; Integration: end-to-end fixture render.
 - FR-03, FR-05 → Integration: render.test (columns, print CSS).
-- FR-07 → Unit: ultimate-guitar.test; Integration: bookmarklet.test, saved-songs.test.
+- FR-07 → Unit: tab-site.test; Integration: bookmarklet.test, saved-songs.test.
 - FR-08, FR-15 → Unit: songs.test (settings validation, library file, merge).
 - FR-09 to FR-13 → Unit: transpose.test (transposition, keys, arrange), segmenter-formatter.test (hidden sections).

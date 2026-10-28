@@ -1,10 +1,11 @@
+import { TAB_ORIGIN } from '../../src/core/importers/tab-site';
 import { mkdir, mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cacheKey, listedSongs, precompute, readCached } from '../../server/saved-songs';
 
-const SONG_A = 'https://tabs.ultimate-guitar.com/tab/example-band/paper-lanterns-chords-101';
-const SONG_B = 'https://tabs.ultimate-guitar.com/tab/other-band/harbour-light-chords-202';
+const SONG_A = `${TAB_ORIGIN}/tab/example-band/paper-lanterns-chords-101`;
+const SONG_B = `${TAB_ORIGIN}/tab/other-band/harbour-light-chords-202`;
 
 const encode = (text: string) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 const page = (song: string) =>
@@ -33,7 +34,7 @@ afterEach(() => rm(root, { recursive: true, force: true }));
 
 describe('cacheKey', () => {
   it('names the file after the artist and song path', () => {
-    expect(cacheKey('https://tabs.ultimate-guitar.com/tab/r-e-m-/the-one-i-love-chords-803165')).toBe(
+    expect(cacheKey(`${TAB_ORIGIN}/tab/r-e-m-/the-one-i-love-chords-803165`)).toBe(
       'r-e-m-__the-one-i-love-chords-803165.json',
     );
   });

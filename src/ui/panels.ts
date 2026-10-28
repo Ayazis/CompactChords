@@ -14,12 +14,14 @@ export interface SongEntry {
 export interface SongGroup {
   name: string;
   entries: SongEntry[];
+  /** Whether a search also matches the group's name (a saved list); false for built-in groups. */
+  matchName?: boolean;
 }
 
 export function renderSongList(root: HTMLElement, groups: SongGroup[], activeKey: string | undefined, query: string): void {
   const needle = query.trim().toLowerCase();
   const matches = (entry: SongEntry, group: SongGroup) =>
-    !needle || `${entry.label} ${entry.detail ?? ''} ${group.name}`.toLowerCase().includes(needle);
+    !needle || `${entry.label} ${entry.detail ?? ''} ${group.matchName === false ? '' : group.name}`.toLowerCase().includes(needle);
 
   const nodes: HTMLElement[] = [];
   for (const group of groups) {
