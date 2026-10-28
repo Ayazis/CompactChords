@@ -9,8 +9,8 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f54d6'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='700' font-size='15' text-anchor='middle' fill='white'%3ECC%3C/text%3E%3C/svg%3E"
     />
-    <script type="module" crossorigin src="./assets/index-CJx4Mo3Q.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CwNhHy12.css">
+    <script type="module" crossorigin src="./assets/index-BV4JuJRV.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BNHJtBRK.css">
   </head>
   <body>
     <div class="app" id="app">
@@ -46,14 +46,14 @@
         <details class="import-box" id="import-box">
           <summary>Import &amp; backup</summary>
           <form id="url-form" class="field" hidden>
-            <label for="url">Ultimate Guitar link</label>
+            <label for="url">Tab-site link</label>
             <div class="inline">
-              <input id="url" type="url" required placeholder="https://tabs.ultimate-guitar.com/tab/…" />
+              <input id="url" type="url" required placeholder="https://…/tab/…" />
               <button class="button" type="submit">Import</button>
             </div>
           </form>
           <div class="field">
-            <span class="field-label">From any Ultimate Guitar page</span>
+            <span class="field-label">From a tab-site page</span>
             <p class="hint">
               Drag this to your bookmarks bar, then click it on a chord page:
               <a id="bookmarklet" class="bookmarklet" href="#">♫ Send to CompactChords</a>
@@ -130,6 +130,17 @@
             <label for="lyric-size">Lyric size <output id="lyric-size-value"></output></label>
             <input id="lyric-size" type="range" min="6" max="24" step="0.5" />
           </div>
+          <div class="field">
+            <label for="section-gap">Space between sections <output id="section-gap-value"></output></label>
+            <input id="section-gap" type="range" min="0" max="3" step="0.1" />
+          </div>
+          <div class="field two">
+            <label for="chord-color">Chord colour</label>
+            <span class="inline">
+              <input id="chord-color" type="color" value="#1f3fb0" />
+              <button id="chord-color-reset" class="button ghost small" type="button">Default</button>
+            </span>
+          </div>
           <label class="check"><input id="show-tabs" type="checkbox" /> Show tablature</label>
           <div class="fit-row">
             <button id="fit" class="button ghost" type="button" title="Largest text that fits on one A4 page">Fit to one page</button>
@@ -138,8 +149,34 @@
         </section>
 
         <section class="group">
+          <h2>Header &amp; footer</h2>
+          <div class="field">
+            <label for="header-text">Header</label>
+            <input id="header-text" type="text" maxlength="200" placeholder="e.g. The Band" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="footer-text">Footer</label>
+            <input id="footer-text" type="text" maxlength="200" placeholder="e.g. The Band · {date}" autocomplete="off" />
+            <p class="hint">Saved with the song. <code>{date}</code> becomes today's date.</p>
+          </div>
+        </section>
+
+        <section class="group">
           <h2>Sections</h2>
           <div id="sections"></div>
+        </section>
+
+        <section class="group">
+          <h2>Appearance</h2>
+          <div class="field">
+            <span class="field-label" id="theme-label">Theme</span>
+            <div class="segmented" role="radiogroup" aria-labelledby="theme-label">
+              <label><input type="radio" name="theme" value="auto" /><span>Auto</span></label>
+              <label><input type="radio" name="theme" value="light" /><span>Light</span></label>
+              <label><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
+            </div>
+            <p class="hint">Applies to the whole app, the text editor and the preview. Printing is always on white paper.</p>
+          </div>
         </section>
 
         <details class="group shortcuts">
