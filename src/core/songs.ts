@@ -15,7 +15,7 @@ export interface SheetSettings {
   accidentals: Accidentals;
   /** Key to use instead of the detected one, e.g. "G" or "F#m". */
   key: 'auto' | string;
-  /** Show chords as Nashville numbers instead of letter names. */
+  /** Show chords as roman numerals instead of letter names. */
   nashville: boolean;
   /** Ids of blocks that are left out of the sheet. */
   hiddenBlocks: string[];

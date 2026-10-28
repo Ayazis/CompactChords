@@ -159,14 +159,16 @@ describe('arrange', () => {
   });
 });
 
-describe('nashville numbers', () => {
-  it('converts chords relative to the key, minor keys via the relative major', async () => {
-    const { nashvilleChord } = await import('../../src/core/transpose');
-    expect(nashvilleChord('G', { root: 7, minor: false })).toBe('1');
-    expect(nashvilleChord('Em7', { root: 7, minor: false })).toBe('6m7');
-    expect(nashvilleChord('D/F#', { root: 7, minor: false })).toBe('5/7');
-    expect(nashvilleChord('Bb', { root: 7, minor: false })).toBe('b3');
-    expect(nashvilleChord('Am', { root: 9, minor: true })).toBe('6m');
+describe('roman numerals', () => {
+  it('uses lower case for minor chords, relative to the key', async () => {
+    const { romanChord } = await import('../../src/core/transpose');
+    const g = { root: 7, minor: false };
+    expect(romanChord('G', g)).toBe('I');
+    expect(romanChord('Em7', g)).toBe('vi7');
+    expect(romanChord('D/F#', g)).toBe('V/VII');
+    expect(romanChord('Bb', g)).toBe('bIII');
+    expect(romanChord('F#dim', g)).toBe('viidim');
+    expect(romanChord('Am', { root: 9, minor: true })).toBe('vi');
   });
 });
 
@@ -181,6 +183,6 @@ describe('key choice', () => {
 
   it('uses the chosen key instead of the detected one', () => {
     expect(arrange(sheet, settings({ key: 'C' })).keys?.original).toBe('C');
-    expect(arrange(sheet, settings({ key: 'C', nashville: true })).doc.blocks[0]!.lines[0]!.raw).toBe('6m 4 1 5');
+    expect(arrange(sheet, settings({ key: 'C', nashville: true })).doc.blocks[0]!.lines[0]!.raw).toBe('vi IV I V');
   });
 });

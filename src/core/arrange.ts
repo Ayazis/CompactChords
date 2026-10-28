@@ -2,7 +2,7 @@
 // and per-section visibility. Runs between parsing and the formatter.
 
 import type { SheetSettings } from './songs';
-import { detectKey, keyName, nashvilleDocument, parseKey, prefersFlats, shiftKey, transposeDocument } from './transpose';
+import { detectKey, keyName, romanDocument, parseKey, prefersFlats, shiftKey, transposeDocument } from './transpose';
 import type { SheetDocument } from './types';
 
 export interface Keys {
@@ -26,10 +26,10 @@ export function arrange(doc: SheetDocument, settings: SheetSettings): Arrangemen
 
   // Leave chords exactly as written unless something asks to change them.
   const shapesKey = key && shiftKey(key, shift);
-  // Numbers are relative to the key, so transposing and the capo don't change them.
+  // Numerals are relative to the key, so transposing and the capo don't change them.
   const transposed =
     settings.nashville && key
-      ? nashvilleDocument(doc, key)
+      ? romanDocument(doc, key)
       : shift === 0 && settings.accidentals === 'auto'
         ? doc
         : transposeDocument(doc, shift, prefersFlats(shapesKey, settings.accidentals));

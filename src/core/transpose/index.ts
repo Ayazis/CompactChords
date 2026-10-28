@@ -59,22 +59,30 @@ export function transposeDocument(doc: SheetDocument, semitones: number, flats: 
   };
 }
 
-const DEGREES = ['1', 'b2', '2', 'b3', '3', '4', 'b5', '5', 'b6', '6', 'b7', '7'];
+const ROMAN = ['I', 'bII', 'II', 'bIII', 'III', 'IV', 'bV', 'V', 'bVI', 'VI', 'bVII', 'VII'];
 
 /**
- * Rewrites a chord as a Nashville number relative to a key. Minor keys count
- * from their relative major, so Am in A minor is 6m.
+ * Rewrites a chord as a roman numeral relative to a key: upper case for major
+ * chords, lower case for minor ones (vi, not 6m). Minor keys count from their
+ * relative major, so Am in A minor is vi.
  */
-export function nashvilleChord(token: string, key: Key): string {
+export function romanChord(token: string, key: Key): string {
   const parts = parseChord(token);
   if (!parts) return token;
   const tonic = key.minor ? mod12(key.root + 3) : key.root;
-  const degree = (note: string) => DEGREES[mod12(noteIndex(note) - tonic)]!;
-  return `${parts.lead}${degree(parts.root)}${parts.quality}${parts.bass ? `/${degree(parts.bass)}` : ''}${parts.trail}`;
+  const degree = (note: string) => ROMAN[mod12(noteIndex(note) - tonic)]!;
+  const triad = triadOf(parts);
+  let numeral = degree(parts.root);
+  let quality = parts.quality;
+  if (triad !== 'maj') {
+    numeral = numeral.toLowerCase();
+    quality = quality.replace(/^(m7b5|ø)/, 'ø').replace(/^(?:min|m(?!aj)|-)/, '');
+  }
+  return `${parts.lead}${numeral}${quality}${parts.bass ? `/${degree(parts.bass)}` : ''}${parts.trail}`;
 }
 
-/** Replaces every chord with its Nashville number, re-spacing like transposeLine. */
-export function nashvilleDocument(doc: SheetDocument, key: Key): SheetDocument {
+/** Replaces every chord with its roman numeral, re-spacing like transposeLine. */
+export function romanDocument(doc: SheetDocument, key: Key): SheetDocument {
   return {
     blocks: doc.blocks.map((block) => ({
       ...block,
@@ -82,7 +90,7 @@ export function nashvilleDocument(doc: SheetDocument, key: Key): SheetDocument {
         if (line.kind !== 'Chord') return line;
         let raw = '';
         const tokens = line.tokens.map((token) => {
-          const text = nashvilleChord(token.text, key);
+          const text = romanChord(token.text, key);
           const start = raw.length === 0 ? token.start : Math.max(token.start, raw.length + 1);
           raw = raw.padEnd(start) + text;
           return { text, start };
