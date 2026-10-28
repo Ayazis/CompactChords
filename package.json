@@ -1,0 +1,27 @@
+{
+  "name": "compact-chords",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Condense chord sheets into compact two-column A4 print layouts.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "precompute": "tsx scripts/precompute.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.5",
+    "fast-check": "^4.10.2",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
+    "ts-jest": "^29.4.15",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.5"
+  }
+}
