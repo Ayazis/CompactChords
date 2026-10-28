@@ -109,36 +109,64 @@ export function chordsOf(doc: SheetDocument): ChordParts[] {
     .filter((chord): chord is ChordParts => chord !== undefined);
 }
 
+// Krumhansl-Kessler key profiles: how strongly each pitch class, counted from
+// the tonic, suggests a major or minor key.
+const MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+const MINOR_PROFILE = [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+
+/** Notes a chord contributes: root, third, fifth and, when written, a seventh. */
+function chordTones(chord: ChordParts): [number, number][] {
+  const root = noteIndex(chord.root);
+  const triad = triadOf(chord);
+  const third = triad === 'maj' ? 4 : 3;
+  const fifth = triad === 'dim' ? 6 : /^(aug|\+)/.test(chord.quality) ? 8 : 7;
+  const tones: [number, number][] = [
+    [root, 1.5],
+    [mod12(root + third), 1],
+    [mod12(root + fifth), 1],
+  ];
+  if (/maj(7|9|11|13)|M7/.test(chord.quality)) tones.push([mod12(root + 11), 0.5]);
+  else if (/(7|9|11|13)/.test(chord.quality)) tones.push([mod12(root + 10), 0.5]);
+  return tones;
+}
+
+function correlation(a: number[], b: number[]): number {
+  const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+  const meanA = mean(a);
+  const meanB = mean(b);
+  let both = 0;
+  let varA = 0;
+  let varB = 0;
+  a.forEach((value, i) => {
+    both += (value - meanA) * (b[i]! - meanB);
+    varA += (value - meanA) ** 2;
+    varB += (b[i]! - meanB) ** 2;
+  });
+  return varA === 0 || varB === 0 ? 0 : both / Math.sqrt(varA * varB);
+}
+
 /**
- * Picks the key whose scale fits the most chords, with a bonus when the song
- * starts or ends on the key's tonic chord.
+ * Picks the key whose Krumhansl-Kessler profile best correlates with the
+ * pitch classes of all chord tones, counting the first and last chord's root
+ * extra since songs tend to start and end on the tonic.
  */
 export function detectKey(doc: SheetDocument): Key | undefined {
-  const chords = chordsOf(doc).map((chord) => ({ root: noteIndex(chord.root), triad: triadOf(chord) }));
+  const chords = chordsOf(doc);
   const first = chords[0];
   const last = chords[chords.length - 1];
   if (!first || !last) return undefined;
 
-  let best: Key | undefined;
-  let bestScore = -1;
-  for (let root = 0; root < 12; root++) {
-    for (const minor of [false, true]) {
-      const major = minor ? mod12(root + 3) : root;
-      const scale = new Map<number, Triad>([
-        [major, 'maj'],
-        [mod12(major + 2), 'min'],
-        [mod12(major + 4), 'min'],
-        [mod12(major + 5), 'maj'],
-        [mod12(major + 7), 'maj'],
-        [mod12(major + 9), 'min'],
-        [mod12(major + 11), 'dim'],
-      ]);
-      const fits = (chord: { root: number; triad: Triad }) =>
-        scale.get(chord.root) === chord.triad || (minor && chord.root === mod12(root + 7) && chord.triad === 'maj');
-      const isTonic = (chord: { root: number; triad: Triad }) =>
-        chord.root === root && chord.triad === (minor ? 'min' : 'maj');
+  const histogram = new Array<number>(12).fill(0);
+  for (const chord of chords) for (const [note, weight] of chordTones(chord)) histogram[note]! += weight;
+  histogram[noteIndex(first.root)]! += 3;
+  histogram[noteIndex(last.root)]! += 2;
 
-      const score = chords.filter(fits).length + (isTonic(first) ? 3 : 0) + (isTonic(last) ? 2 : 0);
+  let best: Key | undefined;
+  let bestScore = -Infinity;
+  for (let root = 0; root < 12; root++) {
+    const rotated = histogram.map((_, i) => histogram[mod12(root + i)]!);
+    for (const minor of [false, true]) {
+      const score = correlation(rotated, minor ? MINOR_PROFILE : MAJOR_PROFILE);
       if (score > bestScore) {
         best = { root, minor };
         bestScore = score;
@@ -146,6 +174,12 @@ export function detectKey(doc: SheetDocument): Key | undefined {
     }
   }
   return best;
+}
+
+/** Parses a key name such as "G" or "F#m"; undefined for anything else. */
+export function parseKey(name: string): Key | undefined {
+  const match = /^([A-G][#b]?)(m?)$/.exec(name);
+  return match ? { root: noteIndex(match[1]!), minor: match[2] === 'm' } : undefined;
 }
 
 export function shiftKey(key: Key, semitones: number): Key {

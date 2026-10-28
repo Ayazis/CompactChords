@@ -169,3 +169,18 @@ describe('nashville numbers', () => {
     expect(nashvilleChord('Am', { root: 9, minor: true })).toBe('6m');
   });
 });
+
+describe('key choice', () => {
+  const sheet = parseSheet('Am F C G\nla la la la');
+  const settings = (patch: Partial<SheetSettings>): SheetSettings => ({ ...DEFAULT_SHEET_SETTINGS, ...patch });
+
+  it('tells a minor key from its relative major', () => {
+    expect(detectKey(sheet)).toEqual({ root: 9, minor: true });
+    expect(detectKey(parseSheet('C G Am F\nla la la la'))).toEqual({ root: 0, minor: false });
+  });
+
+  it('uses the chosen key instead of the detected one', () => {
+    expect(arrange(sheet, settings({ key: 'C' })).keys?.original).toBe('C');
+    expect(arrange(sheet, settings({ key: 'C', nashville: true })).doc.blocks[0]!.lines[0]!.raw).toBe('6m 4 1 5');
+  });
+});
