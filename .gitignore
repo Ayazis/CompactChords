@@ -416,3 +416,10 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# CompactChords build output
+dist/
+coverage/
+# Pre-computed song sheets (npm run precompute). They contain copyrighted
+# lyrics, so they stay local rather than being published with the repo.
+urls/cache/
