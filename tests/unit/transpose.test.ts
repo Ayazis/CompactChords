@@ -158,3 +158,31 @@ describe('arrange', () => {
     ]);
   });
 });
+
+describe('roman numerals', () => {
+  it('uses lower case for minor chords, relative to the key', async () => {
+    const { romanChord } = await import('../../src/core/transpose');
+    const g = { root: 7, minor: false };
+    expect(romanChord('G', g)).toBe('I');
+    expect(romanChord('Em7', g)).toBe('vi7');
+    expect(romanChord('D/F#', g)).toBe('V/VII');
+    expect(romanChord('Bb', g)).toBe('bIII');
+    expect(romanChord('F#dim', g)).toBe('viidim');
+    expect(romanChord('Am', { root: 9, minor: true })).toBe('vi');
+  });
+});
+
+describe('key choice', () => {
+  const sheet = parseSheet('Am F C G\nla la la la');
+  const settings = (patch: Partial<SheetSettings>): SheetSettings => ({ ...DEFAULT_SHEET_SETTINGS, ...patch });
+
+  it('tells a minor key from its relative major', () => {
+    expect(detectKey(sheet)).toEqual({ root: 9, minor: true });
+    expect(detectKey(parseSheet('C G Am F\nla la la la'))).toEqual({ root: 0, minor: false });
+  });
+
+  it('uses the chosen key instead of the detected one', () => {
+    expect(arrange(sheet, settings({ key: 'C' })).keys?.original).toBe('C');
+    expect(arrange(sheet, settings({ key: 'C', nashville: true })).doc.blocks[0]!.lines[0]!.raw).toBe('vi IV I V');
+  });
+});

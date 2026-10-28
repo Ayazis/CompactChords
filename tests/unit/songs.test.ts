@@ -20,6 +20,8 @@ const settings = {
   transpose: -2,
   capo: 3,
   accidentals: 'flat',
+  key: 'auto',
+  nashville: false,
   hiddenBlocks: ['B2'],
   chordlessBlocks: ['B0', 'B4'],
   chordColor: '#aa3366',

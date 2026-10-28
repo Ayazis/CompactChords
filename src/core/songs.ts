@@ -13,6 +13,10 @@ export interface SheetSettings {
   /** Capo fret; chord shapes are shown relative to it. */
   capo: number;
   accidentals: Accidentals;
+  /** Key to use instead of the detected one, e.g. "G" or "F#m". */
+  key: 'auto' | string;
+  /** Show chords as roman numerals instead of letter names. */
+  nashville: boolean;
   /** Ids of blocks that are left out of the sheet. */
   hiddenBlocks: string[];
   /** Ids of blocks printed without chords. */
@@ -34,6 +38,8 @@ export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
   transpose: 0,
   capo: 0,
   accidentals: 'auto',
+  key: 'auto',
+  nashville: false,
   hiddenBlocks: [],
   chordlessBlocks: [],
   chordColor: 'auto',
@@ -108,6 +114,8 @@ const RULES: { [K in keyof SheetSettings]: (value: unknown) => boolean } = {
   transpose: (value) => isInt(value, -11, 11),
   capo: (value) => isInt(value, 0, 11),
   accidentals: (value) => value === 'auto' || value === 'sharp' || value === 'flat',
+  key: (value) => value === 'auto' || (typeof value === 'string' && /^[A-G][#b]?m?$/.test(value)),
+  nashville: (value) => typeof value === 'boolean',
   hiddenBlocks: isBlockIds,
   chordlessBlocks: isBlockIds,
   chordColor: (value) => value === 'auto' || (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)),
