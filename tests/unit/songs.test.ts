@@ -22,6 +22,10 @@ const settings = {
   accidentals: 'flat',
   hiddenBlocks: ['B2'],
   chordlessBlocks: ['B0', 'B4'],
+  chordColor: '#aa3366',
+  sectionGap: 1.5,
+  headerText: 'The Band',
+  footerText: '{date}',
 };
 
 const valid = {

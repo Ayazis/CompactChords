@@ -20,6 +20,8 @@ import { DEFAULT_SETTINGS, renderSheet } from '../ui/render';
 
 const EXAMPLE_KEY = 'example';
 const LAST_OPENED_KEY = 'compact-chords.last-opened';
+const THEME_KEY = 'compact-chords.theme';
+const DEFAULT_CHORD_COLOR = '#1f3fb0';
 const PAGE_CONTENT_MM = 297 - 2 * DEFAULT_SETTINGS.marginMm;
 const PX_PER_MM = 96 / 25.4;
 
@@ -80,6 +82,10 @@ const settingsPanel = $<HTMLElement>('settings');
 const libraryToggle = $<HTMLButtonElement>('toggle-library');
 const settingsToggle = $<HTMLButtonElement>('toggle-settings');
 const scrim = $<HTMLElement>('scrim');
+const sectionGap = $<HTMLInputElement>('section-gap');
+const chordColor = $<HTMLInputElement>('chord-color');
+const headerText = $<HTMLInputElement>('header-text');
+const footerText = $<HTMLInputElement>('footer-text');
 
 // ---------- Status ----------
 
@@ -175,6 +181,7 @@ function renderPanels(): void {
   $('transpose-value').textContent = formatShift(settings.transpose);
   $('chord-size-value').textContent = `${settings.chordPx}px`;
   $('lyric-size-value').textContent = `${settings.lyricPx}px`;
+  $('section-gap-value').textContent = `${settings.sectionGap}em`;
 
   const keyInfo = state.arrangement?.keys;
   const rows: [string, string][] = keyInfo
@@ -234,6 +241,10 @@ function syncControls(): void {
   chordSize.value = String(settings.chordPx);
   lyricSize.value = String(settings.lyricPx);
   showTabs.checked = settings.showTabs;
+  sectionGap.value = String(settings.sectionGap);
+  chordColor.value = settings.chordColor === 'auto' ? DEFAULT_CHORD_COLOR : settings.chordColor;
+  headerText.value = settings.headerText;
+  footerText.value = settings.footerText;
   for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="accidentals"]')) {
     radio.checked = radio.value === settings.accidentals;
   }
@@ -532,6 +543,42 @@ chordSize.addEventListener('input', () => changeSettings({ chordPx: Number(chord
 lyricSize.addEventListener('input', () => changeSettings({ lyricPx: Number(lyricSize.value) }));
 showTabs.addEventListener('change', () => changeSettings({ showTabs: showTabs.checked }));
 $('fit').addEventListener('click', fitToPage);
+sectionGap.addEventListener('input', () => changeSettings({ sectionGap: Number(sectionGap.value) }));
+chordColor.addEventListener('input', () => changeSettings({ chordColor: chordColor.value }));
+$('chord-color-reset').addEventListener('click', () => changeSettings({ chordColor: 'auto' }));
+headerText.addEventListener('input', () => changeSettings({ headerText: headerText.value }));
+footerText.addEventListener('input', () => changeSettings({ footerText: footerText.value }));
+
+// ---------- Theme (an app preference, not saved with songs) ----------
+
+type Theme = 'auto' | 'light' | 'dark';
+
+function applyTheme(theme: Theme): void {
+  if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.dataset.theme = theme;
+  for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="theme"]')) radio.checked = radio.value === theme;
+}
+
+function storedTheme(): Theme {
+  try {
+    const value = localStorage.getItem(THEME_KEY);
+    return value === 'light' || value === 'dark' ? value : 'auto';
+  } catch {
+    return 'auto';
+  }
+}
+
+for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="theme"]')) {
+  radio.addEventListener('change', () => {
+    applyTheme(radio.value as Theme);
+    try {
+      localStorage.setItem(THEME_KEY, radio.value);
+    } catch {
+      // The choice still applies for this visit.
+    }
+  });
+}
+applyTheme(storedTheme());
 
 for (const radio of document.querySelectorAll<HTMLInputElement>('input[name="accidentals"]')) {
   radio.addEventListener('change', () => changeSettings({ accidentals: radio.value as SheetSettings['accidentals'] }));

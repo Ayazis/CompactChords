@@ -128,6 +128,17 @@
             <label for="lyric-size">Lyric size <output id="lyric-size-value"></output></label>
             <input id="lyric-size" type="range" min="6" max="24" step="0.5" />
           </div>
+          <div class="field">
+            <label for="section-gap">Space between sections <output id="section-gap-value"></output></label>
+            <input id="section-gap" type="range" min="0" max="3" step="0.1" />
+          </div>
+          <div class="field two">
+            <label for="chord-color">Chord colour</label>
+            <span class="inline">
+              <input id="chord-color" type="color" value="#1f3fb0" />
+              <button id="chord-color-reset" class="button ghost small" type="button">Default</button>
+            </span>
+          </div>
           <label class="check"><input id="show-tabs" type="checkbox" /> Show tablature</label>
           <div class="fit-row">
             <button id="fit" class="button ghost" type="button" title="Largest text that fits on one A4 page">Fit to one page</button>
@@ -136,8 +147,34 @@
         </section>
 
         <section class="group">
+          <h2>Header &amp; footer</h2>
+          <div class="field">
+            <label for="header-text">Header</label>
+            <input id="header-text" type="text" maxlength="200" placeholder="e.g. The Band" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="footer-text">Footer</label>
+            <input id="footer-text" type="text" maxlength="200" placeholder="e.g. The Band · {date}" autocomplete="off" />
+            <p class="hint">Saved with the song. <code>{date}</code> becomes today's date.</p>
+          </div>
+        </section>
+
+        <section class="group">
           <h2>Sections</h2>
           <div id="sections"></div>
+        </section>
+
+        <section class="group">
+          <h2>Appearance</h2>
+          <div class="field">
+            <span class="field-label" id="theme-label">Theme</span>
+            <div class="segmented" role="radiogroup" aria-labelledby="theme-label">
+              <label><input type="radio" name="theme" value="auto" /><span>Auto</span></label>
+              <label><input type="radio" name="theme" value="light" /><span>Light</span></label>
+              <label><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
+            </div>
+            <p class="hint">Applies to the whole app, the text editor and the preview. Printing is always on white paper.</p>
+          </div>
         </section>
 
         <details class="group shortcuts">

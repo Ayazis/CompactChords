@@ -21,6 +21,13 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: str
   return node;
 }
 
+/** Replaces "{date}" with today's date (YYYY-MM-DD). */
+export function expandBanner(text: string, now = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return text.replace(/\{date\}/gi, date);
+}
+
 function renderRow(row: Row): HTMLElement {
   switch (row.type) {
     case 'pair': {
@@ -46,8 +53,13 @@ export function renderSheet(root: HTMLElement, blocks: RenderBlock[], heading: H
   root.style.setProperty('--lyric-size', `${settings.lyricPx}px`);
   root.style.setProperty('--margin', `${settings.marginMm}mm`);
   root.style.setProperty('--columns', String(settings.columns));
+  root.style.setProperty('--section-gap', `${settings.sectionGap}em`);
+  if (settings.chordColor === 'auto') root.style.removeProperty('--chord-color');
+  else root.style.setProperty('--chord-color', settings.chordColor);
 
   const nodes: HTMLElement[] = [];
+  const header = expandBanner(settings.headerText).trim();
+  if (header) nodes.push(el('div', 'sheet-banner top', header));
   if (heading.title || heading.details) {
     const header = el('header', 'sheet-header');
     if (heading.title) header.append(el('h1', 'sheet-title', heading.title));
@@ -66,5 +78,7 @@ export function renderSheet(root: HTMLElement, blocks: RenderBlock[], heading: H
   if (blocks.length === 0) {
     nodes.push(el('p', 'sheet-empty', 'Paste or type a chord sheet in the editor, or pick a song from the library.'));
   }
+  const footer = expandBanner(settings.footerText).trim();
+  if (footer && blocks.length > 0) nodes.push(el('div', 'sheet-banner bottom', footer));
   root.replaceChildren(...nodes);
 }

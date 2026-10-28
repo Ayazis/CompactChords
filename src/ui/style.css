@@ -19,10 +19,11 @@
   --radius: 8px;
   --topbar: 56px;
 
-  /* The sheet is paper in both themes. */
+  /* The sheet follows the theme on screen; printing always uses the light values. */
   --paper: #ffffff;
   --paper-ink: #16181d;
   --paper-muted: #5c6270;
+  --paper-rule: #ececec;
   --chord-ink: #1f3fb0;
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -31,8 +32,9 @@
   color-scheme: light;
 }
 
+/* Dark follows the system unless the user picked a theme (data-theme on <html>). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #12141a;
     --panel: #1a1d25;
     --panel-2: #20242e;
@@ -48,8 +50,37 @@
     --ok: #6fd39b;
     --focus: #9fb4ff;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px rgb(0 0 0 / 0.35);
+    --paper: #1c1f27;
+    --paper-ink: #e7e9ef;
+    --paper-muted: #a3a9b8;
+    --paper-rule: #2f3441;
+    --chord-ink: #8fa8ff;
     color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #12141a;
+  --panel: #1a1d25;
+  --panel-2: #20242e;
+  --ink: #e7e9ef;
+  --muted: #a3a9b8;
+  --faint: #7a8191;
+  --line: #2b303c;
+  --line-strong: #3a404e;
+  --accent: #7b98ff;
+  --accent-ink: #0d1330;
+  --accent-soft: #252d4a;
+  --danger: #ff8a80;
+  --ok: #6fd39b;
+  --focus: #9fb4ff;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px rgb(0 0 0 / 0.35);
+  --paper: #1c1f27;
+  --paper-ink: #e7e9ef;
+  --paper-muted: #a3a9b8;
+  --paper-rule: #2f3441;
+  --chord-ink: #8fa8ff;
+  color-scheme: dark;
 }
 
 * {
@@ -304,6 +335,16 @@ textarea {
   background: var(--panel);
   color: var(--ink);
   font: inherit;
+}
+
+input[type='color'] {
+  width: 40px;
+  height: 28px;
+  padding: 0 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--panel);
+  cursor: pointer;
 }
 
 input[type='range'] {
@@ -741,7 +782,7 @@ kbd {
   transform-origin: top left;
   column-count: var(--columns, 2);
   column-gap: 12mm;
-  column-rule: 1px solid #ececec;
+  column-rule: 1px solid var(--paper-rule);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--lyric-size, 12px);
   line-height: 1.25;
@@ -775,14 +816,33 @@ kbd {
 
 .block {
   break-inside: avoid;
-  margin-top: 0.8em;
+  margin-top: var(--section-gap, 0.8em);
   /* Lets tab rows size themselves to the column width (cqi units). */
   container-type: inline-size;
 }
 
 .block:first-of-type,
 .block.continuation {
-  margin-top: 0.4em;
+  margin-top: calc(var(--section-gap, 0.8em) / 2);
+}
+
+.sheet-banner {
+  column-span: all;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--paper-muted);
+  font-size: calc(var(--lyric-size, 12px) * 0.85);
+}
+
+.sheet-banner.top {
+  margin-bottom: 2mm;
+}
+
+.sheet-banner.bottom {
+  margin-top: 4mm;
+  padding-top: 1.5mm;
+  border-top: 1px solid var(--paper-rule);
 }
 
 .block-title {
@@ -823,7 +883,7 @@ kbd {
   font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
   font-size: var(--chord-size, 12px);
   font-weight: 700;
-  color: var(--chord-ink);
+  color: var(--chord-color, var(--chord-ink));
   line-height: 1.15;
 }
 
@@ -977,7 +1037,13 @@ kbd {
 }
 
 @media print {
-  :root {
+  :root,
+  :root:root:root {
+    --paper: #ffffff;
+    --paper-ink: #16181d;
+    --paper-muted: #5c6270;
+    --paper-rule: #ececec;
+    --chord-ink: #000000;
     color-scheme: light;
   }
 
@@ -1017,8 +1083,7 @@ kbd {
     column-fill: auto;
   }
 
-  .chord,
-  .row.chords {
-    color: #000;
+  .sheet {
+    background: #fff;
   }
 }

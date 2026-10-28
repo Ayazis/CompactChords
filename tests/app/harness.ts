@@ -47,6 +47,7 @@ for (const target of [document, window] as EventTarget[]) {
 export function disposeApp(): void {
   for (const [target, type, listener] of attached.splice(0)) target.removeEventListener(type, listener);
   jest.clearAllTimers();
+  document.documentElement.removeAttribute('data-theme');
 }
 
 export async function bootApp(options: BootOptions = {}): Promise<App> {

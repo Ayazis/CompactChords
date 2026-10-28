@@ -17,6 +17,13 @@ export interface SheetSettings {
   hiddenBlocks: string[];
   /** Ids of blocks printed without chords. */
   chordlessBlocks: string[];
+  /** "auto" follows the theme; otherwise a #rrggbb colour for chords. */
+  chordColor: 'auto' | string;
+  /** Space between sections, in em of the lyric size. */
+  sectionGap: number;
+  /** Fixed text above and below the sheet; "{date}" becomes today's date. */
+  headerText: string;
+  footerText: string;
 }
 
 export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
@@ -29,9 +36,15 @@ export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
   accidentals: 'auto',
   hiddenBlocks: [],
   chordlessBlocks: [],
+  chordColor: 'auto',
+  sectionGap: 0.8,
+  headerText: '',
+  footerText: '',
 };
 
 export const SIZE_RANGE = { min: 6, max: 24 };
+export const SECTION_GAP_RANGE = { min: 0, max: 3 };
+export const BANNER_MAX = 200;
 
 export interface StoredSong {
   id: string;
@@ -85,6 +98,8 @@ const isSize = (value: unknown): value is number =>
 const isBlockIds = (value: unknown): value is string[] =>
   Array.isArray(value) && value.length <= 500 && value.every((id) => typeof id === 'string' && /^B\d{1,4}$/.test(id));
 
+const isBanner = (value: unknown): value is string => typeof value === 'string' && value.length <= BANNER_MAX;
+
 const RULES: { [K in keyof SheetSettings]: (value: unknown) => boolean } = {
   chordPx: isSize,
   lyricPx: isSize,
@@ -95,6 +110,10 @@ const RULES: { [K in keyof SheetSettings]: (value: unknown) => boolean } = {
   accidentals: (value) => value === 'auto' || value === 'sharp' || value === 'flat',
   hiddenBlocks: isBlockIds,
   chordlessBlocks: isBlockIds,
+  chordColor: (value) => value === 'auto' || (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)),
+  sectionGap: (value) => typeof value === 'number' && value >= SECTION_GAP_RANGE.min && value <= SECTION_GAP_RANGE.max,
+  headerText: isBanner,
+  footerText: isBanner,
 };
 
 /**
