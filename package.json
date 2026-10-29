@@ -11,7 +11,8 @@
     "precompute": "tsx scripts/precompute.ts",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "make-fixtures": "tsx scripts/make-fixtures.ts"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

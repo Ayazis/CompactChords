@@ -4,7 +4,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { chromium, type Browser, type Page } from 'playwright';
 import { parseSheet } from '../../src/core';
-import { exampleSheet } from '../helpers';
+import { exampleSheet, realSheets } from '../helpers';
 import { readPdf, type TextRun } from './pdf';
 
 jest.setTimeout(60_000);
@@ -123,6 +123,25 @@ describe('printed sheet (PDF from Chromium)', () => {
       expect(printed).toBeGreaterThan(preview[index]! - 20);
       expect(printed).toBeLessThanOrEqual(preview[index]!);
     }
+  });
+
+  // Not compared line for line with the preview: a line within a fraction of a
+  // pixel of the column width can wrap on screen but not in print, which moves
+  // the column break by a line (seen with the-hollies after fitting).
+  it.each(realSheets)('prints %s on one page in both columns once fitted', async (_name, text) => {
+    await openSheet(text);
+    await page.click('#fit');
+    await page.waitForTimeout(100);
+    const pages = await print();
+
+    expect(pages).toHaveLength(1);
+    expect(usesBothColumns(pages[0]!)).toBe(true);
+  });
+
+  it.each(realSheets)('prints %s at the default size without empty pages', async (_name, text) => {
+    await openSheet(text);
+    const pages = await print();
+    for (const runs of pages) expect(runs.length).toBeGreaterThan(0);
   });
 
   it('prints a song that fills one page without an empty page after it', async () => {

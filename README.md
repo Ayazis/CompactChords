@@ -31,6 +31,7 @@ Upload `dist/` anywhere (GitHub Pages, Netlify, a folder on a web server). Asset
 
 - Paste a tab-site link into *Import & backup* to import it.
 - Put links in `urls/*.txt` (one per line) to list them in the library. `npm run precompute` fetches them once into `urls/cache/` (git-ignored, as it contains lyrics).
+- `npm run make-fixtures` turns those cached sheets into lyric-free test fixtures in `tests/fixtures/sheets/` (see the README there).
 
 ## Tests
 

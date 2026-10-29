@@ -1,0 +1,571 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`real sheet bob-dylan__knockin-on-heavens-door parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    "Intro",
+    "Chord Lyric Chord Lyric",
+  ],
+  [
+    "B1",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B2",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B3",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B5",
+    "Outro",
+    "Chord Lyric",
+  ],
+]
+`;
+
+exports[`real sheet buffalo-springfield__for-what-its-worth parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    "Riff",
+    "Chord Tab Tab Tab Tab Tab Tab",
+  ],
+  [
+    "B1",
+    "Intro",
+    "Chord",
+  ],
+  [
+    "B2",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B3",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Blank Chord",
+  ],
+  [
+    "B5",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B6",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Blank Chord",
+  ],
+  [
+    "B8",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B9",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Blank Chord",
+  ],
+  [
+    "B11",
+    "Verse 4",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B12",
+    "Chorus/Outro",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+]
+`;
+
+exports[`real sheet creedence-clearwater-revival__bad-moon-rising parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    null,
+    "Lyric",
+  ],
+  [
+    "B1",
+    "Intro",
+    "Chord",
+  ],
+  [
+    "B2",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B3",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B5",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B6",
+    "Solo",
+    "Chord Chord Chord Chord",
+  ],
+  [
+    "B7",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B8",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Chord Lyric",
+  ],
+]
+`;
+
+exports[`real sheet creedence-clearwater-revival__proud-mary parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    "Intro",
+    "Chord Chord Chord",
+  ],
+  [
+    "B1",
+    "Verse 1",
+    "Chord Lyric Blank Lyric Blank Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Verse 2",
+    "Chord Lyric Blank Lyric Blank Chord Lyric Chord Lyric",
+  ],
+  [
+    "B7",
+    "Instrumental",
+    "Chord Chord Chord",
+  ],
+  [
+    "B8",
+    "Solo",
+    "Chord Chord Chord Blank Chord Lyric",
+  ],
+  [
+    "B10",
+    "Instrumental",
+    "Chord Chord Chord",
+  ],
+  [
+    "B11",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Blank Lyric",
+  ],
+]
+`;
+
+exports[`real sheet guns-n-roses__sweet-child-o-mine parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    null,
+    "Lyric",
+  ],
+  [
+    "B1",
+    "Intro",
+    "Chord Chord Chord",
+  ],
+  [
+    "B2",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B3",
+    "Chorus",
+    "Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Instrumental",
+    "Chord",
+  ],
+  [
+    "B5",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B6",
+    "Chorus",
+    "Chord Lyric Chord Lyric",
+  ],
+  [
+    "B7",
+    "Instrumental",
+    "Chord Chord",
+  ],
+  [
+    "B8",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B9",
+    "Solo Part 1",
+    "Chord Chord Chord Chord",
+  ],
+  [
+    "B10",
+    "Solo Part 2",
+    "Chord Chord Chord Chord",
+  ],
+  [
+    "B11",
+    "Outro",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B12",
+    "Fill",
+    "Tab Tab Tab Tab Tab Tab Lyric",
+  ],
+]
+`;
+
+exports[`real sheet neil-young__heart-of-gold parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    "Intro",
+    "Chord Tab Tab Tab Tab Tab Tab",
+  ],
+  [
+    "B1",
+    "Harmonica Intro",
+    "Chord Chord Chord Blank Chord Tab Tab Tab Tab Tab Tab",
+  ],
+  [
+    "B3",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Riff",
+    "Tab Tab Tab Tab Tab Tab",
+  ],
+  [
+    "B5",
+    "Harmonica Solo",
+    "Chord Chord Chord Chord",
+  ],
+  [
+    "B6",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B8",
+    "Harmonica Solo",
+    "Chord Chord Chord",
+  ],
+  [
+    "B9",
+    "Outro",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Blank Lyric Blank Lyric Blank Lyric",
+  ],
+]
+`;
+
+exports[`real sheet pointer-sisters__fire parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    null,
+    "Lyric",
+  ],
+  [
+    "B1",
+    "Intro",
+    "Chord",
+  ],
+  [
+    "B2",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B3",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Bridge",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B5",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Blank Lyric Blank Chord Blank Lyric Lyric Lyric Lyric Lyric Blank Lyric Lyric Lyric Lyric Lyric Blank Lyric Lyric",
+  ],
+]
+`;
+
+exports[`real sheet public-domain__amazing-grace parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    null,
+    "Lyric Lyric",
+  ],
+  [
+    "B1",
+    null,
+    "Lyric",
+  ],
+  [
+    "B2",
+    "Intro",
+    "Chord",
+  ],
+  [
+    "B3",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric",
+  ],
+  [
+    "B6",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B7",
+    "Outro",
+    "Chord",
+  ],
+]
+`;
+
+exports[`real sheet public-domain__oh-susanna parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    null,
+    "Lyric Lyric",
+  ],
+  [
+    "B1",
+    "Intro",
+    "Tab Tab Tab Tab Tab Tab",
+  ],
+  [
+    "B2",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B3",
+    "Chorus",
+    "Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Blank Lyric Chord Lyric Chord Lyric Blank Chord",
+  ],
+]
+`;
+
+exports[`real sheet public-domain__scarborough-fair parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    null,
+    "Lyric Lyric",
+  ],
+  [
+    "B1",
+    "Intro",
+    "Chord",
+  ],
+  [
+    "B2",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B3",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric",
+  ],
+  [
+    "B5",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B6",
+    "Verse 4",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B7",
+    "Outro",
+    "Chord Chord",
+  ],
+]
+`;
+
+exports[`real sheet r-e-m-__the-one-i-love parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    "Intro",
+    "Chord",
+  ],
+  [
+    "B1",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B2",
+    "Chorus",
+    "Lyric Lyric Blank Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B5",
+    "Chorus",
+    "Chord Lyric Chord Lyric",
+  ],
+  [
+    "B6",
+    "Solo",
+    "Chord",
+  ],
+  [
+    "B7",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B8",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B9",
+    "Outro",
+    "Chord Blank Lyric Lyric Lyric",
+  ],
+]
+`;
+
+exports[`real sheet the-hollies__long-cool-woman-in-a-black-dress parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    "Intro",
+    "Tab Tab Tab Tab Tab Tab Blank Tab Tab Tab Tab Tab Tab",
+  ],
+  [
+    "B2",
+    "Verse",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Chorus",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Chord Lyric Blank Lyric",
+  ],
+  [
+    "B6",
+    "Verse",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Blank Chord Lyric Chord Lyric Chord Lyric Blank Lyric Blank Lyric Blank Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+]
+`;
+
+exports[`real sheet the-scene__blauw parses into the same sections and line kinds 1`] = `
+[
+  [
+    "B0",
+    null,
+    "Lyric Lyric Lyric Lyric Lyric",
+  ],
+  [
+    "B1",
+    null,
+    "Lyric",
+  ],
+  [
+    "B2",
+    "Intro",
+    "Chord Lyric Chord Lyric Chord Chord",
+  ],
+  [
+    "B3",
+    "Verse 1",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B4",
+    "Verse 2",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B5",
+    "Chorus",
+    "Chord Lyric Chord Lyric",
+  ],
+  [
+    "B6",
+    "Verse 3",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B7",
+    "Chorus",
+    "Chord Lyric Chord Lyric",
+  ],
+  [
+    "B8",
+    "Bridge",
+    "Chord Lyric Chord Lyric Chord Lyric Chord Lyric",
+  ],
+  [
+    "B9",
+    "Outro",
+    "Chord Chord Blank Lyric Lyric Lyric Lyric Lyric Lyric Lyric Lyric Blank Lyric Lyric Blank Lyric Lyric",
+  ],
+]
+`;
