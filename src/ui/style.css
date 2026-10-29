@@ -815,14 +815,14 @@ kbd {
 }
 
 .block {
-  margin-top: var(--section-gap, 0.8em);
+  margin-top: var(--section-gap, 2em);
   /* Lets tab rows size themselves to the column width (cqi units). */
   container-type: inline-size;
 }
 
 .block:first-of-type,
 .block.continuation {
-  margin-top: calc(var(--section-gap, 0.8em) / 2);
+  margin-top: calc(var(--section-gap, 2em) / 2);
 }
 
 .sheet-banner {
@@ -870,7 +870,7 @@ kbd {
 }
 
 .paragraph + .paragraph {
-  margin-top: calc(var(--section-gap, 0.8em) / 2);
+  margin-top: calc(var(--section-gap, 2em) / 2);
 }
 
 .pair {

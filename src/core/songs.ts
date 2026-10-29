@@ -43,7 +43,7 @@ export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
   hiddenBlocks: [],
   chordlessBlocks: [],
   chordColor: 'auto',
-  sectionGap: 0.8,
+  sectionGap: 2,
   headerText: '',
   footerText: '',
 };

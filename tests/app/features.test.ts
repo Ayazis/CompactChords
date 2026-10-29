@@ -62,11 +62,17 @@ describe('chord colour', () => {
 });
 
 describe('space between sections', () => {
-  it('changes the gap and shows its value', async () => {
+  it('starts at 2em', async () => {
     const app = await bootApp();
-    await set(app, '#section-gap', '2');
     expect(app.$('#sheet').style.getPropertyValue('--section-gap')).toBe('2em');
     expect(app.$('#section-gap-value').textContent).toBe('2em');
+  });
+
+  it('changes the gap and shows its value', async () => {
+    const app = await bootApp();
+    await set(app, '#section-gap', '1.5');
+    expect(app.$('#sheet').style.getPropertyValue('--section-gap')).toBe('1.5em');
+    expect(app.$('#section-gap-value').textContent).toBe('1.5em');
   });
 
   it('can be removed entirely and is restored from a saved song', async () => {
@@ -217,6 +223,6 @@ describe('settings validation for the new options', () => {
   });
 
   it('gives older saves the defaults', () => {
-    expect(parseSettings({ columns: 3 })).toMatchObject({ chordColor: 'auto', sectionGap: 0.8, headerText: '', footerText: '' });
+    expect(parseSettings({ columns: 3 })).toMatchObject({ chordColor: 'auto', sectionGap: 2, headerText: '', footerText: '' });
   });
 });
