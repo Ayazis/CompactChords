@@ -19,7 +19,7 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - `classifier`
   - Inputs: tokens per line; Outputs: `Chord|Lyric|Blank|Header|Tab` with score. Uses ratio and grammar hits. Threshold configurable.
 - `segmenter`
-  - Groups lines into blocks by blank lines and headers. Pure.
+  - Groups lines into blocks by headers and blank lines; a blank line inside a titled block stays in it as a paragraph break. Pure.
 - `transpose`
   - Transposes chords and chord lines (keeping columns), detects the key, picks sharps or flats. Pure.
 - `arrange`

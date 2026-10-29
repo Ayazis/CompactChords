@@ -862,6 +862,11 @@ kbd {
   white-space: pre-wrap;
 }
 
+/* A blank line inside a section: the same space a continuation gets. */
+.row.gap {
+  height: calc(var(--section-gap, 0.8em) / 2);
+}
+
 .pair {
   display: flex;
   flex-wrap: wrap;

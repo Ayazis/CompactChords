@@ -45,6 +45,8 @@ function renderRow(row: Row): HTMLElement {
       return el('pre', 'row tab', row.text);
     case 'lyric':
       return el('div', 'row lyric', row.text);
+    case 'gap':
+      return el('div', 'row gap');
   }
 }
 

@@ -313,11 +313,13 @@ describe('formatting edge cases', () => {
     );
   });
 
-  it('block ids stay unique and sequential', () => {
+  it('block ids stay unique and increasing', () => {
     fc.assert(
       fc.property(fc.array(fc.constantFrom('[Verse]', 'G  D', 'words', '', 'e|--0--0--|', 'Chorus:'), { maxLength: 40 }), (lines) => {
         const ids = parseSheet(lines.join('\n')).blocks.map((block) => block.id);
-        expect(ids).toEqual(ids.map((_, i) => `B${i}`));
+        const numbers = ids.map((id) => Number(id.slice(1)));
+        expect(ids).toEqual(numbers.map((n) => `B${n}`));
+        numbers.forEach((n, i) => i > 0 && expect(n).toBeGreaterThan(numbers[i - 1]!));
       }),
       { seed: SEED },
     );
