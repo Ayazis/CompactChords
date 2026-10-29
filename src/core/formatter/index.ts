@@ -81,7 +81,10 @@ export function format(doc: SheetDocument, options: FormatOptions): RenderBlock[
   for (const block of doc.blocks) {
     if (!block.meta.visible) continue;
     const rows = linesToRows(block.lines, block.meta.showChords, options);
-    if (rows.length === 0 && block.title === undefined) continue;
+    // A titled block with nothing left to show is kept as a bare header (a repeat
+    // marker like "[Chorus]"), unless it only held tablature that is hidden.
+    const onlyHiddenTabs = !options.showTabs && block.lines.some((line) => line.kind === 'Tab');
+    if (rows.length === 0 && (block.title === undefined || onlyHiddenTabs)) continue;
     const rendered: RenderBlock = { id: block.id, continuation: block.title === undefined && out.length > 0, rows };
     if (block.title !== undefined) rendered.title = block.title;
     out.push(rendered);

@@ -287,9 +287,8 @@ describe('formatting edge cases', () => {
     expect(pairSegments(chordLine!, 'Oh my')).toEqual([{ text: 'Oh m' }, { chord: 'G', text: 'y' }]);
   });
 
-  it('shows a titled block even when everything in it is hidden tab', () => {
-    const blocks = format(parseSheet('[Riff]\ne|--0--0--|'), { showTabs: false });
-    expect(blocks).toMatchObject([{ title: 'Riff', rows: [] }]);
+  it('leaves out a titled block when everything in it is hidden tab', () => {
+    expect(format(parseSheet('[Riff]\ne|--0--0--|'), { showTabs: false })).toEqual([]);
   });
 
   it('renders an empty document as nothing', () => {

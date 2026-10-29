@@ -106,10 +106,18 @@ describe('format', () => {
     expect(format(sheet, { showTabs: false })[0]!.rows).toEqual([{ type: 'lyric', text: 'la la' }]);
   });
 
-  it('hides tablature when asked', () => {
-    const riff = (showTabs: boolean) => format(doc, { showTabs }).find((b) => b.title === 'Riff')!;
-    expect(riff(true).rows).toHaveLength(6);
-    expect(riff(false).rows).toHaveLength(0);
+  it('hides tablature, and the header of a tab-only block, when asked', () => {
+    const riff = (showTabs: boolean) => format(doc, { showTabs }).find((b) => b.title === 'Riff');
+    expect(riff(true)!.rows).toHaveLength(6);
+    expect(riff(false)).toBeUndefined();
+  });
+
+  it('keeps the header of a block that still shows something besides tablature', () => {
+    const sheet = parseSheet('[Intro]\nG  D\ne|--0--2--|\n\n[Chorus]');
+    expect(format(sheet, { showTabs: false }).map((b) => [b.title, b.rows.length])).toEqual([
+      ['Intro', 1],
+      ['Chorus', 0],
+    ]);
   });
 
   it('drops chords from blocks with showChords off (FR-N2 hook)', () => {
