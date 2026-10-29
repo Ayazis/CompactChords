@@ -31,6 +31,12 @@ describe('end-to-end fixture render', () => {
     ]);
   });
 
+  it('splits a section into paragraphs at its gap rows', () => {
+    const verse = [...render().querySelectorAll('.block')].find((b) => b.querySelector('.block-title')?.textContent === 'Verse 2')!;
+    expect([...verse.querySelectorAll('.paragraph')].map((p) => p.querySelectorAll('.row').length)).toEqual([2, 2]);
+    expect(verse.querySelectorAll('.block > .row')).toHaveLength(0);
+  });
+
   it('AC-02: chord and lyric sizes are independent', () => {
     const root = render({ ...DEFAULT_SETTINGS, chordPx: 15, lyricPx: 10 });
     expect(root.style.getPropertyValue('--chord-size')).toBe('15px');
@@ -72,8 +78,14 @@ describe('print CSS (FR-05, AC-03, AC-04)', () => {
     expect(printRules).toMatch(/\.sheet\s*{[^}]*transform:\s*none/);
   });
 
-  it('keeps blocks together and headers with their content', () => {
-    expect(css).toMatch(/\.block\s*{[^}]*break-inside:\s*avoid/);
+  it('keeps paragraphs and rows together and headers with their content', () => {
+    expect(css).toMatch(/\.paragraph\s*{[^}]*break-inside:\s*avoid/);
+    expect(css).toMatch(/\.row\s*{[^}]*break-inside:\s*avoid/);
     expect(css).toMatch(/\.block-title\s*{[^}]*break-after:\s*avoid/);
+  });
+
+  it('balances the columns like the preview does', () => {
+    expect(printRules).toMatch(/\.sheet\s*{[^}]*column-fill:\s*balance/);
+    expect(css).not.toMatch(/column-fill:\s*auto/);
   });
 });

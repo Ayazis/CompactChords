@@ -815,7 +815,6 @@ kbd {
 }
 
 .block {
-  break-inside: avoid;
   margin-top: var(--section-gap, 0.8em);
   /* Lets tab rows size themselves to the column width (cqi units). */
   container-type: inline-size;
@@ -856,15 +855,22 @@ kbd {
 
 .row {
   margin: 0;
+  /* Never splits a chord from its lyric when a paragraph is taller than a column. */
+  break-inside: avoid;
 }
 
 .row.lyric {
   white-space: pre-wrap;
 }
 
-/* A blank line inside a section: the same space a continuation gets. */
-.row.gap {
-  height: calc(var(--section-gap, 0.8em) / 2);
+/* Paragraphs of a section (split by blank lines) stay whole; the space
+   between them matches a continuation's. */
+.paragraph {
+  break-inside: avoid;
+}
+
+.paragraph + .paragraph {
+  margin-top: calc(var(--section-gap, 0.8em) / 2);
 }
 
 .pair {
@@ -1085,7 +1091,9 @@ kbd {
     padding: 0;
     box-shadow: none;
     transform: none !important;
-    column-fill: auto;
+    /* Same as the preview: columns share the content evenly. In print only the
+       last page is balanced, earlier pages fill to the bottom. */
+    column-fill: balance;
   }
 
   .sheet {
