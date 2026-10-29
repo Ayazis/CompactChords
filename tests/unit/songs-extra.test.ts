@@ -174,8 +174,10 @@ describe('browser library storage', () => {
 
 describe('side panels', () => {
   it('labels sections by header, first lyric (shortened) or position', () => {
-    const doc = parseSheet('[Verse]\nG\nhello\n\nG  D\nA very long lyric line that goes on and on\n\nG');
-    expect(doc.blocks.map((block, i) => blockLabel(block, i))).toEqual(['Verse', '“A very long lyric line tha…”', 'Section 3']);
+    const doc = parseSheet('[Verse]\nG\nhello\n[Chorus]\nla\n\nG  D\nA very long lyric line that goes on and on\n\nG');
+    expect(doc.blocks.map((block, i) => blockLabel(block, i))).toEqual(['Verse', 'Chorus']);
+    const untitled = parseSheet('G  D\nA very long lyric line that goes on and on\n\nG');
+    expect(untitled.blocks.map((block, i) => blockLabel(block, i))).toEqual(['“A very long lyric line tha…”', 'Section 2']);
   });
 
   it('renders sections with disabled chord toggles for lyric-only or hidden sections', () => {

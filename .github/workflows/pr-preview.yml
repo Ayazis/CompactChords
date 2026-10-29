@@ -29,6 +29,7 @@ jobs:
       - if: github.event.action != 'closed'
         run: |
           npm ci
+          npx playwright install --with-deps chromium
           npm test
           npm run build
 

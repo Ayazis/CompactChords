@@ -10,7 +10,9 @@ export type Row =
   | { type: 'pair'; segments: Segment[] }
   | { type: 'chords'; text: string }
   | { type: 'lyric'; text: string }
-  | { type: 'tab'; text: string };
+  | { type: 'tab'; text: string }
+  /** Paragraph break inside a section. */
+  | { type: 'gap' };
 
 export interface RenderBlock {
   id: string;
@@ -62,10 +64,15 @@ function linesToRows(lines: Line[], showChords: boolean, options: FormatOptions)
       case 'Tab':
         if (options.showTabs) rows.push({ type: 'tab', text: line.raw });
         break;
+      case 'Blank':
+        // Only between visible rows: hidden chords or tabs leave no double gap.
+        if (rows.length > 0 && rows[rows.length - 1]!.type !== 'gap') rows.push({ type: 'gap' });
+        break;
       default:
         rows.push({ type: 'lyric', text: line.raw });
     }
   }
+  if (rows[rows.length - 1]?.type === 'gap') rows.pop();
   return rows;
 }
 

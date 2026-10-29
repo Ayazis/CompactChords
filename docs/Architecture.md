@@ -19,7 +19,7 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - `classifier`
   - Inputs: tokens per line; Outputs: `Chord|Lyric|Blank|Header|Tab` with score. Uses ratio and grammar hits. Threshold configurable.
 - `segmenter`
-  - Groups lines into blocks by blank lines and headers. Pure.
+  - Groups lines into blocks by headers and blank lines; a blank line inside a titled block stays in it as a paragraph break. Pure.
 - `transpose`
   - Transposes chords and chord lines (keeping columns), detects the key, picks sharps or flats. Pure.
 - `arrange`
@@ -72,7 +72,7 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - Stored data, imported library files and bookmarklet payloads are validated; invalid entries are skipped with a message.
 
 ## Printing and layout
-- CSS columns (1–3); `break-inside: avoid` on blocks; monospace for chords; `@page` for A4.
+- CSS columns (1–3), balanced in the preview and on the last printed page; `break-inside: avoid` on paragraphs (split by blank lines) and rows; monospace for chords; `@page` for A4.
 - Lyric segments wrap within a column; tablature shrinks to the column width (container query units).
 - The on-screen preview scales the A4 sheet to the available width; print ignores the scaling.
 

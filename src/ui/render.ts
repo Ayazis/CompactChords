@@ -28,7 +28,7 @@ export function expandBanner(text: string, now = new Date()): string {
   return text.replace(/\{date\}/gi, date);
 }
 
-function renderRow(row: Row): HTMLElement {
+function renderRow(row: Exclude<Row, { type: 'gap' }>): HTMLElement {
   switch (row.type) {
     case 'pair': {
       const line = el('div', 'row pair');
@@ -69,7 +69,17 @@ export function renderSheet(root: HTMLElement, blocks: RenderBlock[], heading: H
   for (const block of blocks) {
     const section = el('section', block.continuation ? 'block continuation' : 'block');
     if (block.title) section.append(el('h2', 'block-title', block.title));
-    section.append(...block.rows.map(renderRow));
+    // Gap rows split a section into paragraphs. A paragraph stays in one column;
+    // a long section may continue in the next column between paragraphs.
+    let paragraph: HTMLElement | undefined;
+    for (const row of block.rows) {
+      if (row.type === 'gap') {
+        paragraph = undefined;
+        continue;
+      }
+      if (!paragraph) section.append((paragraph = el('div', 'paragraph')));
+      paragraph.append(renderRow(row));
+    }
     // All tab rows of a block share one size so the staff lines stay aligned.
     const tabWidth = Math.max(0, ...block.rows.map((row) => (row.type === 'tab' ? row.text.length : 0)));
     if (tabWidth > 0) section.style.setProperty('--chars', String(tabWidth));
