@@ -35,6 +35,7 @@ Upload `dist/` anywhere (GitHub Pages, Netlify, a folder on a web server). Asset
 ## Tests
 
 ```bash
+npx playwright install chromium   # once: the print layout tests print to PDF in Chromium
 npm test
 npm run typecheck
 ```

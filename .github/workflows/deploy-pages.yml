@@ -24,6 +24,8 @@ jobs:
           cache: npm
 
       - run: npm ci
+      # The print layout tests print to PDF in Chromium.
+      - run: npx playwright install --with-deps chromium
       - run: npm test
       - run: npm run build
 
