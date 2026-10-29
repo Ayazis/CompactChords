@@ -955,6 +955,7 @@ kbd {
 @media (max-width: 820px) {
   :root {
     --topbar: 92px;
+    --settings-height: min(45vh, 420px);
   }
 
   .app {
@@ -1030,6 +1031,27 @@ kbd {
 
   .preview {
     padding: 16px;
+  }
+
+  /* Settings become a bottom sheet so the chord sheet stays in view while
+     adjusting it; the sheet stays undimmed and can scroll clear of the panel. */
+  .settings {
+    top: auto;
+    left: 0;
+    width: auto;
+    max-height: var(--settings-height);
+    border-left: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 12px 12px 0 0;
+    transform: translateY(105%);
+  }
+
+  .app:has(.settings[data-open]) .preview {
+    padding-bottom: calc(var(--settings-height) + 16px);
+  }
+
+  .app:has(.settings[data-open]):not(:has(.library[data-open])) .scrim {
+    display: none;
   }
 }
 
