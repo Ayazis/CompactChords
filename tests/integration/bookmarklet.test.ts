@@ -13,13 +13,13 @@ function ugPage(data: unknown): void {
 }
 
 /** Runs the bookmarklet the way a browser would, capturing what it opens. */
-function runBookmarklet(): string | undefined {
+function runBookmarklet(confirmAnswer = false): string | undefined {
   let opened: string | undefined;
   window.open = jest.fn((url?: string | URL) => {
     opened = String(url);
     return {} as Window;
   });
-  window.alert = jest.fn();
+  window.confirm = jest.fn(() => confirmAnswer);
   const code = decodeURIComponent(bookmarkletHref(APP).slice('javascript:'.length));
   new Function(code)();
   return opened;
@@ -43,10 +43,11 @@ describe('bookmarklet', () => {
     });
   });
 
-  it('tells the user when the page has no chord sheet', () => {
+  it('offers to open the app when the page has no chord sheet', () => {
     document.body.innerHTML = '<p>Not a tab page</p>';
-    expect(runBookmarklet()).toBeUndefined();
-    expect(window.alert).toHaveBeenCalledWith('CompactChords: no chord sheet found on this page.');
+    expect(runBookmarklet(false)).toBeUndefined();
+    expect(window.confirm).toHaveBeenCalledWith('CompactChords: no chord sheet found on this page. Open CompactChords instead?');
+    expect(runBookmarklet(true)).toBe(APP);
   });
 });
 

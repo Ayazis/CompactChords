@@ -24,7 +24,9 @@ function bookmarkletBody(appUrl: string): string {
     const target = ${JSON.stringify(appUrl)} + ${JSON.stringify(IMPORT_HASH)} + encodeURIComponent(JSON.stringify(payload));
     if (!window.open(target, '_blank')) location.href = target;
   } catch (error) {
-    alert('CompactChords: no chord sheet found on this page.');
+    if (confirm('CompactChords: no chord sheet found on this page. Open CompactChords instead?')) {
+      if (!window.open(${JSON.stringify(appUrl)}, '_blank')) location.href = ${JSON.stringify(appUrl)};
+    }
   }
 })()`;
 }

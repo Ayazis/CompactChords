@@ -21,6 +21,13 @@ function writeLibrary(songs: StoredSong[]): void {
   } catch {
     throw new Error('Could not save: browser storage is full or turned off.');
   }
+  keepStorage();
+}
+
+// Asks the browser not to evict the library when space runs low. It does not
+// override a "clear site data on close" setting.
+function keepStorage(): void {
+  navigator.storage?.persist?.().catch(() => undefined);
 }
 
 export function putSong(song: StoredSong): StoredSong[] {

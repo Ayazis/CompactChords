@@ -72,7 +72,7 @@ describe('bookmarklet details', () => {
     setup();
     let opened: string | undefined;
     window.open = jest.fn((url?: string | URL) => ((opened = String(url)), {} as Window));
-    window.alert = jest.fn();
+    window.confirm = jest.fn(() => false);
     new Function(decodeURIComponent(bookmarkletHref(APP).slice('javascript:'.length)))();
     return opened;
   };
@@ -106,12 +106,12 @@ describe('bookmarklet details', () => {
     expect(payloadOf(opened!).capo).toBeUndefined();
   });
 
-  it('alerts when the store has no text sheet (e.g. a pro tab)', () => {
+  it('asks to open the app when the store has no text sheet (e.g. a pro tab)', () => {
     expect(run(() => store({ tab: { song_name: 'S' }, tab_view: {} }))).toBeUndefined();
-    expect(window.alert).toHaveBeenCalled();
+    expect(window.confirm).toHaveBeenCalled();
   });
 
-  it('alerts when the store is not JSON', () => {
+  it('asks to open the app when the store is not JSON', () => {
     expect(
       run(() => {
         const div = document.createElement('div');
@@ -120,7 +120,7 @@ describe('bookmarklet details', () => {
         document.body.append(div);
       }),
     ).toBeUndefined();
-    expect(window.alert).toHaveBeenCalled();
+    expect(window.confirm).toHaveBeenCalled();
   });
 
   it('handles non-ASCII lyrics', () => {
