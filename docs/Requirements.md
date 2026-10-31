@@ -18,6 +18,7 @@
 - FR-15 Export the library to a JSON file and import it again (merged by song id).
 - FR-16 Warn before discarding unsaved changes (switching songs, closing the tab).
 - FR-17 Keyboard shortcuts: Ctrl+S save, Ctrl+E editor, Alt+↑/↓ transpose, / search.
+- FR-18 Optional sign-in with Google keeps the library in the cloud and in sync across devices: merge on sign-in, on start and on demand; saves and deletions sent immediately; newest save wins; works offline from the browser library (ADR-0005).
 
 ## Quality attributes (NFR)
 - NFR-01 Deterministic parsing; no network access in the core.
@@ -25,11 +26,11 @@
 - NFR-03 Layout stable under `@media print`.
 - NFR-04 Accessibility: keyboard usable; no color-only cues (chords are also bold and monospace).
 - NFR-05 Performance: classify 1000 lines < 150 ms on baseline hardware.
-- NFR-06 Works as static files from any path (relative asset URLs); every feature except link import works without a server.
+- NFR-06 Works as static files from any path (relative asset URLs); every feature except link import works without a server. Cloud sync needs only a free Firebase project, no server of our own.
 - NFR-07 Usable from 375 px wide: panels become drawers and the preview scales to fit.
 
 ## Constraints
-- Static site; no backend. The local server is an optional development aid.
+- Static site; no backend of our own. The local server is an optional development aid; Firebase is an optional hosted service.
 - Modern evergreen browsers (CSS `:has()` and container query units).
 
 ## Acceptance criteria
@@ -44,4 +45,5 @@
 - FR-03, FR-05 → Integration: render.test (columns, print CSS).
 - FR-07 → Unit: tab-site.test; Integration: bookmarklet.test, saved-songs.test.
 - FR-08, FR-15 → Unit: songs.test (settings validation, library file, merge).
+- FR-18 → Unit: sync.test (reconcile, cloud records), songs-extra.test (deletion records); App: cloud.test (sign-in, sync, save/delete, sign-out).
 - FR-09 to FR-13 → Unit: transpose.test (transposition, keys, arrange), segmenter-formatter.test (hidden sections).

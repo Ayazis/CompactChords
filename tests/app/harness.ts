@@ -1,6 +1,8 @@
 // Boots the real app (src/app/main.ts) against index.html in jsdom, so tests
 // can drive it the way a user would: click, type, and read the DOM back.
 
+import type { CloudRecord } from '../../src/core/sync';
+import type { Cloud, CloudUser } from '../../src/platform/cloud';
 import { readProjectFile } from '../helpers';
 
 export type ServerRoute = (url: URL) => { status?: number; body: unknown };
@@ -13,6 +15,73 @@ export interface BootOptions {
   /** Responses of the optional local server by path; omit for static hosting. */
   server?: Record<string, ServerRoute>;
   confirm?: boolean;
+  /** A fake cloud to sign in to; omit for an app without cloud config. */
+  cloud?: FakeCloud;
+}
+
+/** In-memory stand-in for the Firebase cloud: one record list per user. */
+export class FakeCloud implements Cloud {
+  records = new Map<string, Map<string, CloudRecord>>();
+  user: CloudUser | undefined;
+  /** Who the sign-in popup signs in as. */
+  nextUser: CloudUser = { uid: 'u1', name: 'Ada', email: 'ada@example.com' };
+  /** Makes the next calls of these methods fail with this error. */
+  failures: Partial<Record<'signIn' | 'pull' | 'push' | 'signOut', unknown>> = {};
+  pushes: CloudRecord[][] = [];
+  private listeners: ((user: CloudUser | undefined) => void)[] = [];
+
+  constructor(options: { user?: CloudUser; records?: Record<string, CloudRecord[]> } = {}) {
+    this.user = options.user;
+    for (const [uid, list] of Object.entries(options.records ?? {})) {
+      this.records.set(uid, new Map(list.map((record) => [record.id, structuredClone(record)])));
+    }
+  }
+
+  stored(uid = 'u1'): CloudRecord[] {
+    return [...(this.records.get(uid)?.values() ?? [])];
+  }
+
+  private fail(method: keyof FakeCloud['failures']): void {
+    const error = this.failures[method];
+    if (error !== undefined) {
+      delete this.failures[method];
+      throw error;
+    }
+  }
+
+  private setUser(user: CloudUser | undefined): void {
+    this.user = user;
+    for (const listener of this.listeners) listener(user);
+  }
+
+  onUserChange(listener: (user: CloudUser | undefined) => void): void {
+    this.listeners.push(listener);
+    queueMicrotask(() => listener(this.user));
+  }
+
+  async signIn(): Promise<void> {
+    this.fail('signIn');
+    this.setUser(this.nextUser);
+  }
+
+  async signOut(): Promise<void> {
+    this.fail('signOut');
+    this.setUser(undefined);
+  }
+
+  async pull(): Promise<CloudRecord[]> {
+    this.fail('pull');
+    return structuredClone(this.stored(this.user!.uid));
+  }
+
+  async push(records: CloudRecord[]): Promise<void> {
+    this.fail('push');
+    this.pushes.push(structuredClone(records));
+    const uid = this.user!.uid;
+    const mine = this.records.get(uid) ?? new Map<string, CloudRecord>();
+    this.records.set(uid, mine);
+    for (const record of records) mine.set(record.id, structuredClone(record));
+  }
 }
 
 export interface App {
@@ -83,6 +152,11 @@ export async function bootApp(options: BootOptions = {}): Promise<App> {
   (globalThis as { CSS?: unknown }).CSS = { escape: (text: string) => text.replace(/["\\]/g, '\\$&') };
 
   jest.resetModules();
+  const cloud = options.cloud;
+  jest.doMock('../../src/platform/cloud', () => ({
+    ...jest.requireActual('../../src/platform/cloud'),
+    connectCloud: async () => cloud,
+  }));
   await jest.isolateModulesAsync(async () => {
     await import('../../src/app/main');
   });

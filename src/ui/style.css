@@ -554,6 +554,44 @@ input[type='radio'] {
   font-size: 13px;
 }
 
+.account {
+  border-top: 1px solid var(--line);
+  padding: 12px;
+}
+
+.account-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-row[hidden] {
+  display: none;
+}
+
+.account-user {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.account-user strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.button.google {
+  align-self: flex-start;
+}
+
+.button.google svg {
+  width: 16px;
+  height: 16px;
+}
+
 .import-box {
   border-top: 1px solid var(--line);
   padding: 0 12px;

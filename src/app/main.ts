@@ -14,13 +14,27 @@ import {
 } from '../core/songs';
 import { importFromUrl, loadListedSongs, printSheet, type ListedSong } from '../platform';
 import { bookmarkletHref, IMPORT_HASH, takeImportPayload } from '../platform/bookmarklet';
-import { exportLibrary, importLibrary, putSong, readLibrary, removeSong } from '../platform/library';
+import { isTombstone, reconcile, sameContent, type CloudRecord } from '../core/sync';
+import { cloudErrorMessage, connectCloud, type Cloud, type CloudUser } from '../platform/cloud';
+import {
+  clearLibrary,
+  exportLibrary,
+  forgetDeleted,
+  importLibrary,
+  putSong,
+  readDeleted,
+  readLibrary,
+  removeSong,
+  replaceLibrary,
+} from '../platform/library';
 import { renderSections, renderSongList, type SongGroup } from '../ui/panels';
 import { DEFAULT_SETTINGS, renderSheet } from '../ui/render';
 
 const EXAMPLE_KEY = 'example';
 const LAST_OPENED_KEY = 'compact-chords.last-opened';
 const THEME_KEY = 'compact-chords.theme';
+/** Account whose cloud library this browser's library was last synced with. */
+const CLOUD_OWNER_KEY = 'compact-chords.cloud-owner';
 const DEFAULT_CHORD_COLOR = '#1f3fb0';
 const PAGE_CONTENT_MM = 297 - 2 * DEFAULT_SETTINGS.marginMm;
 const PX_PER_MM = 96 / 25.4;
@@ -402,6 +416,7 @@ function save(): void {
     setStatus((error as Error).message, 'error');
     return;
   }
+  void pushChange(stored, `Saved “${title}” in this browser`);
   state.song = { ...state.song, id, title };
   state.dirty = false;
   state.isExample = false;
@@ -416,7 +431,9 @@ function deleteCurrent(): void {
   if (!id || !inLibrary(id)) return;
   if (!window.confirm(`Remove “${title}” from your library? This cannot be undone.`)) return;
   try {
-    state.library = removeSong(id);
+    const removed = removeSong(id);
+    state.library = removed.songs;
+    void pushChange(removed.deleted, `Removed “${title}” from this browser`);
   } catch (error) {
     setStatus((error as Error).message, 'error');
     return;
@@ -427,6 +444,201 @@ function deleteCurrent(): void {
   updateAddress();
   setStatus(`Removed “${title}” from your library. It stays open; Save to add it back.`);
 }
+
+// ---------- Cloud (optional sign-in, ADR-0005) ----------
+
+const account = $<HTMLElement>('account');
+const signedOutView = $<HTMLElement>('signed-out');
+const signedInView = $<HTMLElement>('signed-in');
+const accountName = $<HTMLElement>('account-name');
+const syncButton = $<HTMLButtonElement>('sync-now');
+const signInButton = $<HTMLButtonElement>('sign-in');
+const libraryHint = $<HTMLElement>('library-hint');
+const LOCAL_HINT = libraryHint.textContent ?? '';
+
+let cloud: Cloud | undefined;
+let user: CloudUser | undefined;
+let syncing: Promise<void> | undefined;
+/** The next signed-in user comes from the sign-in button, not a remembered session. */
+let pendingSignIn = false;
+
+function renderAccount(): void {
+  account.hidden = !cloud;
+  signedOutView.hidden = Boolean(user);
+  signedInView.hidden = !user;
+  accountName.textContent = user ? user.email || user.name : '';
+  accountName.title = user ? [user.name, user.email].filter(Boolean).join(' · ') : '';
+  syncButton.disabled = syncing !== undefined;
+  libraryHint.textContent = user
+    ? 'Your library is stored in this browser and in your account. Export it for an extra backup.'
+    : LOCAL_HINT;
+}
+
+function readOwner(): string | null {
+  try {
+    return localStorage.getItem(CLOUD_OWNER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeOwner(uid: string | undefined): void {
+  try {
+    if (uid) localStorage.setItem(CLOUD_OWNER_KEY, uid);
+    else localStorage.removeItem(CLOUD_OWNER_KEY);
+  } catch {
+    // Only used to ask before mixing two accounts' songs.
+  }
+}
+
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+/** After a sync, shows the cloud version of the open song unless it has unsaved changes. */
+function reopenIfChanged(): void {
+  const { id } = state.song;
+  if (state.dirty || state.isExample || !id) return;
+  const stored = state.library.find((song) => song.id === id);
+  if (!stored) {
+    // Deleted on another device: it stays open, as after deleting it here.
+    state.dirty = true;
+    return;
+  }
+  const { savedAt: _savedAt, ...song } = stored;
+  if (!sameContent(song, state.song)) openSong(song);
+}
+
+type SyncReason = 'start' | 'sign-in' | 'manual' | 'import';
+
+/** Merges the cloud library into this browser's and uploads what the cloud is missing. */
+function syncLibrary(reason: SyncReason): Promise<void> {
+  if (!cloud || !user) return Promise.resolve();
+  if (syncing) return syncing.then(() => syncLibrary(reason));
+  const signedIn = user;
+  const connection = cloud;
+  syncing = (async () => {
+    renderAccount();
+    try {
+      const remote = await connection.pull();
+      if (user?.uid !== signedIn.uid) return;
+
+      let local = readLibrary();
+      let deleted = readDeleted();
+      const owner = readOwner();
+      // Songs left by another account are only merged into this one when asked.
+      if (owner && owner !== signedIn.uid && local.length > 0) {
+        const keep = window.confirm(
+          `This browser has ${plural(local.length, 'song')} from another account. Add them to the library of ${signedIn.email || 'this account'}?\n\nCancel replaces them with this account's songs.`,
+        );
+        if (!keep) {
+          forgetDeleted(deleted);
+          local = [];
+          deleted = [];
+        }
+      }
+
+      const result = reconcile(local, deleted, remote);
+      replaceLibrary(result.library);
+      writeOwner(signedIn.uid);
+      state.library = result.library;
+      reopenIfChanged();
+      refresh();
+
+      if (result.upload.length) await connection.push(result.upload);
+      forgetDeleted(deleted);
+
+      const changes = [
+        result.received ? `${plural(result.received, 'song')} from the cloud` : '',
+        result.removed ? `${result.removed} removed` : '',
+        result.upload.length ? `${result.upload.length} uploaded` : '',
+      ].filter(Boolean);
+      const summary = changes.length ? changes.join(', ') : 'everything was up to date';
+      if (reason === 'sign-in') setStatus(`Signed in as ${signedIn.email || signedIn.name}. Library synced: ${summary}.`, 'ok');
+      else if (reason === 'manual') setStatus(`Library synced: ${summary}.`, 'ok');
+      else if (reason === 'start' && changes.length) setStatus(`Library synced with your account: ${summary}.`, 'ok');
+    } catch (error) {
+      setStatus(cloudErrorMessage(error), 'error');
+    } finally {
+      syncing = undefined;
+      renderAccount();
+    }
+  })();
+  return syncing;
+}
+
+/** Sends one save or delete to the cloud; a failed upload is retried by the next sync. */
+async function pushChange(record: CloudRecord, done: string): Promise<void> {
+  if (!cloud || !user) return;
+  try {
+    await cloud.push([record]);
+    if (isTombstone(record)) forgetDeleted([record]);
+  } catch (error) {
+    setStatus(`${done}, but not in your account yet: ${cloudErrorMessage(error)} Use Sync now to retry.`, 'error');
+  }
+}
+
+async function signIn(): Promise<void> {
+  if (!cloud) return;
+  signInButton.disabled = true;
+  try {
+    pendingSignIn = true;
+    await cloud.signIn();
+  } catch (error) {
+    pendingSignIn = false;
+    setStatus(cloudErrorMessage(error), 'error');
+  } finally {
+    signInButton.disabled = false;
+  }
+}
+
+async function signOut(): Promise<void> {
+  if (!cloud || !user) return;
+  const email = user.email || user.name;
+  const forget = state.library.length > 0 && window.confirm(
+    `Also remove your songs from this browser? They stay in your account (${email}).\n\nChoose this on a shared computer. Cancel keeps them here.`,
+  );
+  try {
+    await syncing;
+    await cloud.signOut();
+  } catch (error) {
+    setStatus(cloudErrorMessage(error), 'error');
+    return;
+  }
+  if (forget) {
+    clearLibrary();
+    writeOwner(undefined);
+    state.library = [];
+    // Unsaved work stays open; a saved song is closed with the rest.
+    if (state.dirty) refresh();
+    else openExample();
+    setStatus('Signed out and removed your songs from this browser.', 'ok');
+  } else {
+    setStatus('Signed out. Your songs stay in this browser.', 'ok');
+  }
+}
+
+async function startCloud(): Promise<void> {
+  try {
+    cloud = await connectCloud();
+  } catch (error) {
+    setStatus(cloudErrorMessage(error), 'error');
+    return;
+  }
+  if (!cloud) return;
+  renderAccount();
+  cloud.onUserChange((next) => {
+    const previous = user;
+    user = next;
+    renderAccount();
+    if (next && next.uid !== previous?.uid) {
+      void syncLibrary(pendingSignIn ? 'sign-in' : 'start');
+    }
+    pendingSignIn = false;
+  });
+}
+
+signInButton.addEventListener('click', () => void signIn());
+$('sign-out').addEventListener('click', () => void signOut());
+syncButton.addEventListener('click', () => void syncLibrary('manual'));
 
 // ---------- Layout helpers ----------
 
@@ -641,6 +853,7 @@ $<HTMLInputElement>('import-library').addEventListener('change', async (event) =
     refresh();
     const skipped = result.skipped ? `, ${result.skipped} skipped` : '';
     setStatus(`Imported library: ${result.added} new, ${result.updated} updated${skipped}.`, 'ok');
+    void syncLibrary('import');
   } catch (error) {
     setStatus((error as Error).message, 'error');
   }
@@ -718,6 +931,7 @@ function openImportPayload(): boolean {
 window.addEventListener('hashchange', openImportPayload);
 
 async function start(): Promise<void> {
+  void startCloud();
   state.lists = await loadListedSongs();
   urlForm.hidden = state.lists === undefined;
   const sentSomething = location.hash.startsWith(IMPORT_HASH);

@@ -1,7 +1,17 @@
 /** @jest-environment jsdom */
 import { TAB_ORIGIN } from '../../src/core/importers/tab-site';
 import { DEFAULT_SHEET_SETTINGS, mergeSongs, parseLibraryFile, parseSettings, parseStoredSong, SONG_ID, songIdForTitle, songIdForUrl } from '../../src/core/songs';
-import { exportLibrary, importLibrary, putSong, readLibrary, removeSong } from '../../src/platform/library';
+import {
+  clearLibrary,
+  exportLibrary,
+  forgetDeleted,
+  importLibrary,
+  putSong,
+  readDeleted,
+  readLibrary,
+  removeSong,
+  replaceLibrary,
+} from '../../src/platform/library';
 import { blockLabel, renderSections, renderSongList } from '../../src/ui/panels';
 import { parseSheet } from '../../src/core';
 
@@ -120,8 +130,56 @@ describe('browser library storage', () => {
     putSong(stored('my__a') as never);
     putSong(stored('my__b') as never);
     expect(putSong(stored('my__a', { text: 'changed' }) as never).map((song) => [song.id, song.text])).toEqual([['my__a', 'changed'], ['my__b', 'G']]);
-    expect(removeSong('my__a').map((song) => song.id)).toEqual(['my__b']);
-    expect(removeSong('missing')).toHaveLength(1);
+    expect(removeSong('my__a').songs.map((song) => song.id)).toEqual(['my__b']);
+    expect(removeSong('missing').songs).toHaveLength(1);
+  });
+
+  it('remembers deletions for the cloud until they are forgotten or the song is saved again', () => {
+    putSong(stored('my__a') as never);
+    putSong(stored('my__b') as never);
+    const when = new Date('2026-05-01T00:00:00.000Z');
+    const { deleted } = removeSong('my__a', when);
+    expect(deleted).toEqual({ id: 'my__a', deleted: true, savedAt: when.toISOString() });
+    removeSong('my__b', when);
+    expect(readDeleted().map((record) => record.id)).toEqual(['my__a', 'my__b']);
+
+    putSong(stored('my__b') as never);
+    expect(readDeleted().map((record) => record.id)).toEqual(['my__a']);
+
+    // A newer deletion of the same song is not forgotten by an older one.
+    removeSong('my__a', new Date('2026-06-01T00:00:00.000Z'));
+    forgetDeleted([deleted]);
+    expect(readDeleted()).toHaveLength(1);
+    forgetDeleted(readDeleted());
+    expect(readDeleted()).toEqual([]);
+    expect(localStorage.getItem('compact-chords.deleted.v1')).toBeNull();
+  });
+
+  it('ignores corrupt deletion records', () => {
+    localStorage.setItem('compact-chords.deleted.v1', JSON.stringify([{ id: 'my__a', deleted: true, savedAt: 'never' }, 5, { id: 'my__b', deleted: true, savedAt: '2026-01-01T00:00:00Z' }]));
+    expect(readDeleted().map((record) => record.id)).toEqual(['my__b']);
+    for (const value of ['{', '{"a":1}']) {
+      localStorage.setItem('compact-chords.deleted.v1', value);
+      expect(readDeleted()).toEqual([]);
+    }
+  });
+
+  it('replaces and clears the whole library', () => {
+    putSong(stored('my__a') as never);
+    removeSong('my__a');
+    replaceLibrary([stored('my__b') as never]);
+    expect(readLibrary().map((song) => song.id)).toEqual(['my__b']);
+    expect(readDeleted()).toHaveLength(1);
+    clearLibrary();
+    expect(readLibrary()).toEqual([]);
+    expect(readDeleted()).toEqual([]);
+  });
+
+  it('drops deletion records of songs that an imported file brings back', async () => {
+    putSong(stored('my__a') as never);
+    removeSong('my__a');
+    await importLibrary({ name: 'a.json', text: async () => JSON.stringify([stored('my__a')]) } as unknown as File);
+    expect(readDeleted()).toEqual([]);
   });
 
   it('reads an empty library from empty, corrupt or wrong-shaped storage', () => {

@@ -25,5 +25,8 @@
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^8.3.5"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0"
   }
 }

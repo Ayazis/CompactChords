@@ -1,7 +1,7 @@
 # Architecture
 
 ## Overview
-Pure-core pipeline plus thin UI shell, delivered as static files. No runtime services; the local Vite server only adds optional development helpers (ADR-0003, ADR-0004).
+Pure-core pipeline plus thin UI shell, delivered as static files. No runtime services of its own: the local Vite server only adds optional development helpers (ADR-0003, ADR-0004), and an optional Firebase project adds Google sign-in and a cloud copy of the library (ADR-0005).
 
 ```
 text → normalizer → tokenizer → classifier → segmenter → arrange → formatter → ui
@@ -28,6 +28,8 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
   - Transforms blocks to renderable rows; pairs chord lines with lyrics; drops hidden blocks and, per block, chords. Pure.
 - `songs`
   - `StoredSong` and `SheetSettings` contracts, validation of untrusted data, song ids, library file format and merging. Pure.
+- `sync`
+  - Cloud records (songs and deletion tombstones) and `reconcile`, which merges the browser library with the cloud copy: newest `savedAt` per song id wins. Pure.
 - `importers`
   - Pure extractors from source pages and bookmarklet payloads to plain chord-sheet text (one tab site today).
 - `app`
@@ -35,7 +37,7 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - `ui`
   - Render functions for the sheet, song list and sections list, plus all CSS (screen and print); no business logic.
 - `platform`
-  - Browser side effects: localStorage library, export/import files, bookmarklet, optional local-server calls, print.
+  - Browser side effects: localStorage library (with local deletion records), export/import files, bookmarklet, optional local-server calls, print, and the optional cloud (`cloud.ts` interface, `firebase.ts` adapter loaded on demand).
 
 ## Data contracts
 - Line
@@ -58,6 +60,10 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - Stored song
   ```
   { id, url?, title, details, text, settings: SheetSettings, savedAt }
+  ```
+- Cloud record (Firestore `users/{uid}/songs/{id}`): a stored song, or a tombstone
+  ```
+  { id, deleted: true, savedAt }
   ```
 
 ## Algorithms

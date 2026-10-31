@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Security rules for CompactChords' cloud library (docs/Cloud-sync.md).
+// Paste this into Firebase console → Firestore Database → Rules and Publish.
+//
+// Each signed-in person can read and write only their own songs, stored at
+// users/{their uid}/songs/{song id}. Nobody can list other people's data.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Who may use the cloud library. As written, anyone with a Google account
+    // can sign in and keep their own songs. To limit it to a handful of
+    // people, replace `true` with a list of their Google addresses, e.g.
+    //   return request.auth.token.email in ['you@gmail.com', 'friend@gmail.com'];
+    function allowed() {
+      return true;
+    }
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid && allowed();
+    }
+
+    // A song ({id, title, details, text, settings, savedAt, url?}) or a
+    // deletion marker ({id, deleted: true, savedAt}), keyed by song id.
+    function validRecord(songId) {
+      let data = request.resource.data;
+      return data.id == songId
+        && data.savedAt is string
+        && (
+          (data.keys().hasOnly(['id', 'deleted', 'savedAt']) && data.deleted == true)
+          || (
+            data.keys().hasOnly(['id', 'url', 'title', 'details', 'text', 'settings', 'savedAt'])
+            && data.title is string && data.title.size() <= 1000
+            && data.text is string && data.text.size() <= 200000
+            && data.settings is map
+          )
+        );
+    }
+
+    match /users/{uid}/songs/{songId} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validRecord(songId);
+    }
+  }
+}
