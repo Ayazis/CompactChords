@@ -451,7 +451,7 @@ describe('sheet settings', () => {
 
   it('reports the page count', async () => {
     const app = await bootApp();
-    expect(app.$('#pages').textContent).toBe('About 1 A4 page');
+    expect(app.$('#pages').textContent).toBe('1 A4 page');
   });
 });
 

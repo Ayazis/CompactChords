@@ -48,6 +48,92 @@ function renderRow(row: Exclude<Row, { type: 'gap' }>): HTMLElement {
   }
 }
 
+/** Sections and their paragraphs may continue on the next page; rows may not. */
+const isSplittable = (node: HTMLElement) => node.classList.contains('block') || node.classList.contains('paragraph');
+
+/**
+ * Takes the children of `parent` that lie past the page (in an overflow column
+ * or below it) out of the page. A child that only partly fits is split: its
+ * rest goes along as an untitled continuation of it.
+ */
+function takeOverflow(parent: HTMLElement, isOut: (node: HTMLElement) => boolean): HTMLElement[] {
+  const children = [...parent.children] as HTMLElement[];
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]!;
+    if (isOut(child)) {
+      const moved = children.slice(i);
+      for (const node of moved) node.remove();
+      return moved;
+    }
+    if (!isSplittable(child)) continue;
+    const rest = takeOverflow(child, isOut);
+    if (rest.length === 0) continue;
+    const shell = child.cloneNode(false) as HTMLElement;
+    if (shell.classList.contains('block')) shell.classList.add('continuation');
+    shell.append(...rest);
+    const after = children.slice(i + 1);
+    for (const node of after) node.remove();
+    return [shell, ...after];
+  }
+  return [];
+}
+
+/**
+ * Splits a rendered sheet into A4 pages: whatever does not fit on `first` moves
+ * to new pages placed right after it. Needs layout, so `first` must be visible
+ * (it may be off screen). Returns all pages; the last one balances its columns.
+ */
+export function paginate(first: HTMLElement): HTMLElement[] {
+  while (first.nextElementSibling?.classList.contains('sheet-more')) first.nextElementSibling.remove();
+  first.classList.remove('last');
+  // The footer closes the song: it goes on the last page once the rest is laid out.
+  const footer = first.querySelector<HTMLElement>(':scope > .sheet-banner.bottom');
+  footer?.remove();
+
+  const pages = [first];
+  const split = (page: HTMLElement): HTMLElement[] => {
+    // Without layout (hidden, or no rendering engine) everything stays on one page.
+    if (page.offsetWidth === 0) return [];
+    const box = page.getBoundingClientRect();
+    // The preview may be scaled; rects are, offsets are not.
+    const scale = box.width / page.offsetWidth;
+    const style = getComputedStyle(page);
+    const right = box.left + (page.offsetWidth - parseFloat(style.paddingRight || '0')) * scale - 1;
+    const bottom = box.top + (page.offsetHeight - parseFloat(style.paddingBottom || '0')) * scale - 1;
+    const rest = takeOverflow(page, (node) => {
+      const rect = node.getBoundingClientRect();
+      return rect.left >= right || rect.top >= bottom;
+    });
+    // Something taller than a whole page stays put rather than moving on forever.
+    if (page.childElementCount === 0) {
+      page.append(...rest);
+      return [];
+    }
+    return rest;
+  };
+  const addPage = (nodes: HTMLElement[]) => {
+    const page = first.cloneNode(false) as HTMLElement;
+    page.removeAttribute('id');
+    page.removeAttribute('aria-label');
+    page.classList.add('sheet-more');
+    page.append(...nodes);
+    pages[pages.length - 1]!.after(page);
+    pages.push(page);
+  };
+  // Every page keeps at least one child, so this ends; the cap is a safety net.
+  for (let rest = split(first); rest.length > 0 && pages.length < 100; rest = split(pages[pages.length - 1]!)) addPage(rest);
+
+  const last = pages[pages.length - 1]!;
+  last.classList.add('last');
+  if (footer) {
+    last.append(footer);
+    const rest = split(last);
+    if (rest.length > 0) addPage(rest);
+  }
+  for (const page of pages) page.classList.toggle('last', page === pages[pages.length - 1]);
+  return pages;
+}
+
 export function renderSheet(root: HTMLElement, blocks: RenderBlock[], heading: Heading, settings: UiSettings): void {
   root.style.setProperty('--chord-size', `${settings.chordPx}px`);
   root.style.setProperty('--lyric-size', `${settings.lyricPx}px`);

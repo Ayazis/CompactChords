@@ -146,7 +146,7 @@ describe('printed sheet (PDF from Chromium)', () => {
 
   it('prints a song that fills one page without an empty page after it', async () => {
     await openSheet(song(9));
-    expect(await page.textContent('#pages')).toBe('About 1 A4 page');
+    expect(await page.textContent('#pages')).toBe('1 A4 page');
     const pages = await print();
 
     expect(pages).toHaveLength(1);

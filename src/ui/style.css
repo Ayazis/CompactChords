@@ -994,20 +994,35 @@ kbd {
 
 /* ---------- Sheet (shared by preview and print) ---------- */
 
+/* The preview shows real A4 pages: a full page fills its columns top to
+   bottom and the rest flows onto the next page (see paginate()). */
+.sheet-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 210mm;
+  transform-origin: top left;
+}
+
 .sheet {
   width: 210mm;
-  min-height: 297mm;
+  height: 297mm;
   padding: var(--margin, 12mm);
   background: var(--paper);
   color: var(--paper-ink);
   box-shadow: var(--shadow);
-  transform-origin: top left;
+  column-fill: auto;
   column-count: var(--columns, 2);
   column-gap: 12mm;
   column-rule: 1px solid var(--paper-rule);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--lyric-size, 12px);
   line-height: 1.25;
+}
+
+/* The last page shares its content evenly between the columns. */
+.sheet.last {
+  column-fill: balance;
 }
 
 .sheet-header {
@@ -1286,6 +1301,14 @@ kbd {
 
 /* ---------- Print: A4, only the sheet, columns flow across pages ---------- */
 
+/* Laid out off screen so its sheets can be split into pages before printing. */
+.batch-print {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  visibility: hidden;
+}
+
 @page {
   size: A4;
   margin: 12mm;
@@ -1329,15 +1352,25 @@ kbd {
     height: auto !important;
   }
 
+  .sheet-pages {
+    display: block;
+    width: auto;
+    transform: none !important;
+  }
+
+  /* Each preview page is one printed page. Its content already fits, so it is
+     balanced rather than given a fixed height that rounding could overflow. */
   .sheet {
     width: auto;
-    min-height: 0;
+    height: auto;
     padding: 0;
     box-shadow: none;
-    transform: none !important;
-    /* Same as the preview: columns share the content evenly. In print only the
-       last page is balanced, earlier pages fill to the bottom. */
     column-fill: balance;
+  }
+
+  .sheet-pages > .sheet:not(:last-child),
+  .batch-print > .sheet:not(:last-child) {
+    break-after: page;
   }
 
   .sheet {
@@ -1350,10 +1383,7 @@ kbd {
   }
 
   body.batch-printing .batch-print {
-    display: block !important;
-  }
-
-  .batch-print .sheet + .sheet {
-    break-before: page;
+    position: static;
+    visibility: visible;
   }
 }

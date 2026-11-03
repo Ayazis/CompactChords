@@ -22,7 +22,7 @@ import { importFromUrl, loadListedSongs, printSheet, type ListedSong } from '../
 import { bookmarkletHref, IMPORT_HASH, takeImportPayload } from '../platform/bookmarklet';
 import { exportLibrary, importLibrary, putSong, readLibrary, removeSong, updateSongs } from '../platform/library';
 import { renderSections, renderSongList, type SongFolder, type SongGroup } from '../ui/panels';
-import { DEFAULT_SETTINGS, el, renderSheet } from '../ui/render';
+import { DEFAULT_SETTINGS, el, paginate, renderSheet } from '../ui/render';
 
 const EXAMPLE_KEY = 'example';
 const LAST_OPENED_KEY = 'compact-chords.last-opened';
@@ -31,8 +31,6 @@ const COPIED_KEY = 'compact-chords.copied-settings';
 const PASTE_GROUPS_KEY = 'compact-chords.paste-groups';
 const COLLAPSED_KEY = 'compact-chords.collapsed-folders';
 const DEFAULT_CHORD_COLOR = '#1f3fb0';
-const PAGE_CONTENT_MM = 297 - 2 * DEFAULT_SETTINGS.marginMm;
-const PX_PER_MM = 96 / 25.4;
 
 interface Song {
   /** Library id: set once saved, or up front for songs from a link. */
@@ -104,6 +102,7 @@ function writePref(key: string, value: unknown): void {
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const sheet = $<HTMLElement>('sheet');
+const sheetPages = $<HTMLElement>('sheet-pages');
 const batchPrint = $<HTMLElement>('batch-print');
 const frame = $<HTMLElement>('sheet-frame');
 const preview = $<HTMLElement>('preview');
@@ -176,27 +175,21 @@ function drawSheet(root: HTMLElement, song: Song, doc = parseSheet(song.text)): 
   return arrangement;
 }
 
-function renderSheetView(): void {
+/** Renders the open song into the preview pages; returns how many A4 pages it takes. */
+function renderSheetView(): number {
   state.doc = parseSheet(state.song.text);
   state.arrangement = drawSheet(sheet, state.song, state.doc);
+  return paginate(sheet).length;
 }
 
-/** Height of the sheet's content in mm, ignoring the A4 minimum height of the preview. */
-function contentMm(): number {
-  sheet.style.minHeight = '0';
-  const height = sheet.offsetHeight;
-  sheet.style.minHeight = '';
-  return height / PX_PER_MM - 2 * DEFAULT_SETTINGS.marginMm;
-}
-
-/** Scales the A4 preview down to fit the available width. */
+/** Scales the A4 pages down to fit the available width. */
 function fitPreview(): void {
-  const width = sheet.offsetWidth;
+  const width = sheetPages.offsetWidth;
   const available = preview.clientWidth - 32;
   const scale = Math.min(1, available / width);
-  sheet.style.transform = scale < 1 ? `scale(${scale})` : '';
+  sheetPages.style.transform = scale < 1 ? `scale(${scale})` : '';
   frame.style.width = `${width * scale}px`;
-  frame.style.height = `${sheet.offsetHeight * scale}px`;
+  frame.style.height = `${sheetPages.offsetHeight * scale}px`;
 }
 
 function formatShift(value: number): string {
@@ -301,9 +294,8 @@ function renderPanels(): void {
   deleteButton.hidden = state.isExample || !inLibrary(state.song.id);
 }
 
-function updatePages(): void {
-  const count = Math.max(1, Math.ceil(contentMm() / PAGE_CONTENT_MM - 0.02));
-  pages.textContent = state.doc.blocks.length === 0 ? '' : `About ${count} A4 page${count === 1 ? '' : 's'}`;
+function updatePages(count: number): void {
+  pages.textContent = state.doc.blocks.length === 0 ? '' : `${count} A4 page${count === 1 ? '' : 's'}`;
 }
 
 /** Re-renders everything, keeping keyboard focus on the same control. */
@@ -311,9 +303,9 @@ function refresh(): void {
   const focused = document.activeElement as HTMLElement | null;
   const focusKey = focused?.dataset.focusKey ?? (focused?.dataset.key ? `key:${focused.dataset.key}` : undefined);
 
-  renderSheetView();
+  const pageCount = renderSheetView();
   renderPanels();
-  updatePages();
+  updatePages(pageCount);
   fitPreview();
 
   if (focusKey) {
@@ -617,13 +609,14 @@ function printFolder(name: string): void {
     // The open song prints as it is on screen, unsaved changes included.
     .map((song): Song => (song.id === state.song.id ? state.song : song));
   if (songs.length === 0) return;
-  batchPrint.replaceChildren(
-    ...songs.map((song) => {
-      const page = el('article', 'sheet');
-      drawSheet(page, song);
-      return page;
-    }),
-  );
+  batchPrint.replaceChildren();
+  batchPrint.hidden = false;
+  for (const song of songs) {
+    const page = el('article', 'sheet');
+    batchPrint.append(page);
+    drawSheet(page, song);
+    paginate(page);
+  }
   document.body.classList.add('batch-printing');
   window.addEventListener('afterprint', endBatchPrint, { once: true });
   setStatus(`Printing ${songCount(songs.length)} from “${name}”.`, 'ok');
@@ -633,6 +626,7 @@ function printFolder(name: string): void {
 function endBatchPrint(): void {
   document.body.classList.remove('batch-printing');
   batchPrint.replaceChildren();
+  batchPrint.hidden = true;
 }
 
 // ---------- Copying settings between songs ----------
@@ -757,8 +751,7 @@ function fitToPage(): void {
   };
   const fits = (step: number, allowWrapping: boolean) => {
     Object.assign(state.song.settings, sizesFor(step));
-    renderSheetView();
-    return contentMm() <= PAGE_CONTENT_MM * 0.97 && (allowWrapping || nothingWraps());
+    return renderSheetView() === 1 && (allowWrapping || nothingWraps());
   };
   // Fitting gets harder as the size grows, so binary search for the last size that fits.
   const largest = (allowWrapping: boolean): number | undefined => {
