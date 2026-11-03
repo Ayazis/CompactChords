@@ -75,7 +75,7 @@ describe('print CSS (FR-05, AC-03, AC-04)', () => {
 
   it('hides everything but the sheet when printing', () => {
     expect(printRules).toMatch(/\.topbar,\s*\.library,\s*\.settings,\s*\.editor,[^{]*{\s*display:\s*none/);
-    expect(printRules).toMatch(/\.sheet\s*{[^}]*transform:\s*none/);
+    expect(printRules).toMatch(/\.sheet-pages\s*{[^}]*transform:\s*none/);
   });
 
   it('keeps paragraphs and rows together and headers with their content', () => {
@@ -84,8 +84,10 @@ describe('print CSS (FR-05, AC-03, AC-04)', () => {
     expect(css).toMatch(/\.block-title\s*{[^}]*break-after:\s*avoid/);
   });
 
-  it('balances the columns like the preview does', () => {
+  it('fills full preview pages to the bottom, balances the last one, and prints each page balanced', () => {
+    expect(css).toMatch(/\.sheet\s*{[^}]*height:\s*297mm[^}]*column-fill:\s*auto/);
+    expect(css).toMatch(/\.sheet\.last\s*{[^}]*column-fill:\s*balance/);
     expect(printRules).toMatch(/\.sheet\s*{[^}]*column-fill:\s*balance/);
-    expect(css).not.toMatch(/column-fill:\s*auto/);
+    expect(printRules).toMatch(/\.sheet-pages > \.sheet:not\(:last-child\)[^{]*{[^}]*break-after:\s*page/);
   });
 });

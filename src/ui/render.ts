@@ -70,6 +70,7 @@ function takeOverflow(parent: HTMLElement, isOut: (node: HTMLElement) => boolean
     if (rest.length === 0) continue;
     const shell = child.cloneNode(false) as HTMLElement;
     if (shell.classList.contains('block')) shell.classList.add('continuation');
+    shell.dataset.split = '';
     shell.append(...rest);
     const after = children.slice(i + 1);
     for (const node of after) node.remove();

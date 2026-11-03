@@ -101,6 +101,9 @@ function writePref(key: string, value: unknown): void {
 }
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const PAGE_CONTENT_MM = 297 - 2 * DEFAULT_SETTINGS.marginMm;
+const PX_PER_MM = 96 / 25.4;
+
 const sheet = $<HTMLElement>('sheet');
 const sheetPages = $<HTMLElement>('sheet-pages');
 const batchPrint = $<HTMLElement>('batch-print');
@@ -182,10 +185,19 @@ function renderSheetView(): number {
   return paginate(sheet).length;
 }
 
+/** Height of the first page's content in mm, as if the page could grow. */
+function contentMm(): number {
+  sheet.style.height = 'auto';
+  const height = sheet.offsetHeight;
+  sheet.style.height = '';
+  return height / PX_PER_MM - 2 * DEFAULT_SETTINGS.marginMm;
+}
+
 /** Scales the A4 pages down to fit the available width. */
 function fitPreview(): void {
   const width = sheetPages.offsetWidth;
-  const available = preview.clientWidth - 32;
+  const style = getComputedStyle(preview);
+  const available = preview.clientWidth - parseFloat(style.paddingLeft || '0') - parseFloat(style.paddingRight || '0');
   const scale = Math.min(1, available / width);
   sheetPages.style.transform = scale < 1 ? `scale(${scale})` : '';
   frame.style.width = `${width * scale}px`;
@@ -751,7 +763,8 @@ function fitToPage(): void {
   };
   const fits = (step: number, allowWrapping: boolean) => {
     Object.assign(state.song.settings, sizesFor(step));
-    return renderSheetView() === 1 && (allowWrapping || nothingWraps());
+    // A little room to spare, so printing never spills onto a second page.
+    return renderSheetView() === 1 && contentMm() <= PAGE_CONTENT_MM * 0.97 && (allowWrapping || nothingWraps());
   };
   // Fitting gets harder as the size grows, so binary search for the last size that fits.
   const largest = (allowWrapping: boolean): number | undefined => {

@@ -68,7 +68,7 @@ async function openSheet(text: string, sizes?: { chordPx: number; lyricPx: numbe
     { text, sizes },
   );
   await page.waitForFunction(
-    (titles) => [...document.querySelectorAll('#sheet .block')].map((block) => block.querySelector('.block-title')?.textContent ?? '').join('|') === titles.join('|'),
+    (titles) => [...document.querySelectorAll('#sheet-pages .block:not([data-split])')].map((block) => block.querySelector('.block-title')?.textContent ?? '').join('|') === titles.join('|'),
     titles,
   );
   // Sizes apply on the next frame; let layout settle before measuring.
@@ -163,6 +163,7 @@ describe('printed sheet (PDF from Chromium)', () => {
     const pages = await print();
 
     expect(pages.length).toBeGreaterThan(1);
+    expect(pages).toHaveLength(await page.locator('#sheet-pages > .sheet').count());
     for (const runs of pages) expect(usesBothColumns(runs)).toBe(true);
   });
 });
