@@ -9,8 +9,8 @@ import { readPdf, type TextRun } from './pdf';
 
 jest.setTimeout(60_000);
 
-/** Printed area of an A4 page with 12 mm margins, in CSS pixels. */
-const PRINT_WIDTH = (186 * 96) / 25.4;
+/** Width of an A4 page in CSS pixels. The sheet prints its own margins, so PDF text positions start at the page edge. */
+const PAGE_WIDTH = (210 * 96) / 25.4;
 
 let server: ChildProcess;
 let origin: string;
@@ -79,28 +79,44 @@ async function print(): Promise<TextRun[][]> {
   return readPdf(await page.pdf({ preferCSSPageSize: true }));
 }
 
-/** For each column of the preview: the bottom of its lowest line, from the top of the content. */
-async function previewColumnBottoms(): Promise<number[]> {
-  return page.evaluate((columnWidth) => {
-    const sheet = document.getElementById('sheet')!;
-    const scale = sheet.getBoundingClientRect().width / sheet.offsetWidth;
-    const style = getComputedStyle(sheet);
-    const box = sheet.getBoundingClientRect();
-    const left = box.left + parseFloat(style.paddingLeft) * scale;
-    const top = box.top + parseFloat(style.paddingTop) * scale;
-    const bottoms = [0, 0];
-    for (const line of sheet.querySelectorAll('.row, .block-title')) {
-      const rect = line.getBoundingClientRect();
-      const column = (rect.left - left) / scale < columnWidth ? 0 : 1;
-      bottoms[column] = Math.max(bottoms[column]!, (rect.bottom - top) / scale);
-    }
-    return bottoms;
-  }, PRINT_WIDTH / 2);
+/** For each preview page and each of its two columns: the bottom of its lowest line, from the top of the page. */
+async function previewColumnBottoms(): Promise<number[][]> {
+  return page.evaluate((pageWidth) => {
+    return [...document.querySelectorAll<HTMLElement>('#sheet-pages > .sheet')].map((sheet) => {
+      const box = sheet.getBoundingClientRect();
+      const scale = box.width / sheet.offsetWidth;
+      const bottoms = [0, 0];
+      for (const line of sheet.querySelectorAll('.row, .block-title')) {
+        const rect = line.getBoundingClientRect();
+        const column = (rect.left - box.left) / scale < pageWidth / 2 ? 0 : 1;
+        bottoms[column] = Math.max(bottoms[column]!, (rect.bottom - box.top) / scale);
+      }
+      return bottoms;
+    });
+  }, PAGE_WIDTH);
 }
 
-const column = (run: TextRun) => (run.x < PRINT_WIDTH / 2 ? 0 : 1);
+const column = (run: TextRun) => (run.x < PAGE_WIDTH / 2 ? 0 : 1);
 const lowest = (runs: TextRun[], index: number) => Math.max(0, ...runs.filter((run) => column(run) === index).map((run) => run.y));
 const usesBothColumns = (runs: TextRun[]) => runs.some((run) => column(run) === 0) && runs.some((run) => column(run) === 1);
+
+/** Expects every printed page to end its columns where the preview page does. Baselines sit a little above the bottom of their line box. */
+async function expectPrintMatchesPreview(): Promise<void> {
+  const preview = await previewColumnBottoms();
+  const pages = await print();
+  expect(pages).toHaveLength(preview.length);
+  pages.forEach((runs, p) => {
+    for (const index of [0, 1]) {
+      const printed = lowest(runs, index);
+      const expected = preview[p]![index]!;
+      if (expected === 0) expect(printed).toBe(0);
+      else {
+        expect(printed).toBeGreaterThan(expected - 20);
+        expect(printed).toBeLessThanOrEqual(expected);
+      }
+    }
+  });
+}
 
 /** A song of `sections` sections, each with `paragraphs` paragraphs of two chord and lyric lines. */
 function song(sections: number, paragraphs = 2): string {
@@ -112,17 +128,24 @@ function song(sections: number, paragraphs = 2): string {
 describe('printed sheet (PDF from Chromium)', () => {
   it('prints a one-page song in the same two columns as the preview', async () => {
     await openSheet(exampleSheet);
-    const preview = await previewColumnBottoms();
-    const pages = await print();
+    expect((await previewColumnBottoms())[0]![1]).toBeGreaterThan(0);
+    await expectPrintMatchesPreview();
+  });
 
-    expect(pages).toHaveLength(1);
-    expect(preview[1]).toBeGreaterThan(0);
-    // Text baselines sit a little above the bottom of their line box.
-    for (const index of [0, 1]) {
-      const printed = lowest(pages[0]!, index);
-      expect(printed).toBeGreaterThan(preview[index]! - 20);
-      expect(printed).toBeLessThanOrEqual(preview[index]!);
-    }
+  // A full page fills its first column to the bottom; print must not even the columns out.
+  it.each([
+    [10, 2],
+    [14, 3],
+    [3, 8],
+  ])('prints %i sections of %i paragraphs with the column breaks of every preview page', async (sections, paragraphs) => {
+    await openSheet(song(sections, paragraphs), { chordPx: 16, lyricPx: 16 });
+    expect(await page.locator('#sheet-pages > .sheet').count()).toBeGreaterThan(1);
+    await expectPrintMatchesPreview();
+  });
+
+  it.each(realSheets)('prints %s with the column breaks of the preview', async (_name, text) => {
+    await openSheet(text);
+    await expectPrintMatchesPreview();
   });
 
   // Not compared line for line with the preview: a line within a fraction of a

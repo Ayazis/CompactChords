@@ -1309,9 +1309,14 @@ kbd {
   visibility: hidden;
 }
 
+/* The sheet brings its own margins (the song's setting), as in the preview. */
 @page {
   size: A4;
-  margin: 12mm;
+  margin: 0;
+}
+
+.column-filler {
+  display: none;
 }
 
 @media print {
@@ -1358,14 +1363,29 @@ kbd {
     transform: none !important;
   }
 
-  /* Each preview page is one printed page. Its content already fits, so it is
-     balanced rather than given a fixed height that rounding could overflow. */
+  /* Each preview page is one printed page, with the preview's margins and its
+     column breaks (marked by paginate()). Every column is forced, so the page
+     needs no fixed height that rounding could overflow. */
   .sheet {
-    width: auto;
+    width: 210mm;
     height: auto;
-    padding: 0;
+    padding: var(--margin, 12mm);
+    /* Blank anyway, and leaving it out keeps a full page from tipping onto the next. */
+    padding-bottom: 0;
     box-shadow: none;
     column-fill: balance;
+  }
+
+  .sheet .column-start {
+    break-before: column;
+    /* The preview drops this margin at the top of a column; a forced break keeps it. */
+    margin-top: 0;
+  }
+
+  .column-filler {
+    display: block;
+    break-before: column;
+    height: 1px;
   }
 
   .sheet-pages > .sheet:not(:last-child),
