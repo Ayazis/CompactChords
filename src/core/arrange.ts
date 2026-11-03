@@ -36,11 +36,17 @@ export function arrange(doc: SheetDocument, settings: SheetSettings): Arrangemen
 
   const hidden = new Set(settings.hiddenBlocks);
   const chordless = new Set(settings.chordlessBlocks);
+  const headerOnly = new Set(settings.headerOnlyBlocks);
   const arranged: Arrangement = {
     doc: {
       blocks: transposed.blocks.map((block) => ({
         ...block,
-        meta: { visible: !hidden.has(block.id), showChords: !chordless.has(block.id) },
+        meta: {
+          visible: !hidden.has(block.id),
+          showChords: !chordless.has(block.id),
+          // Only a header can stand in for its section.
+          headerOnly: block.title !== undefined && headerOnly.has(block.id),
+        },
       })),
     },
   };

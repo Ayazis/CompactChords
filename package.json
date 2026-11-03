@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "make-fixtures": "tsx scripts/make-fixtures.ts"
+    "make-fixtures": "tsx scripts/make-fixtures.ts",
+    "demo": "tsx scripts/demo.ts"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

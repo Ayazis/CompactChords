@@ -503,8 +503,8 @@ input[type='radio'] {
 
 .song-item {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   padding: 7px 8px;
   border: 0;
@@ -524,6 +524,166 @@ input[type='radio'] {
   background: var(--accent-soft);
   color: var(--accent);
   box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.song-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.select-box {
+  flex: none;
+  margin: 0;
+}
+
+.song-item.selectable:has(.select-box:checked) {
+  background: var(--accent-soft);
+}
+
+.folder-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;
+}
+
+.folder-head .select-box + .folder-toggle {
+  padding-left: 0;
+}
+
+.folder-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 7px 8px 7px 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folder-toggle:hover {
+  color: var(--accent);
+}
+
+.folder-toggle::before {
+  content: '';
+  flex: none;
+  width: 0;
+  height: 0;
+  border-block: 4px solid transparent;
+  border-left: 6px solid currentColor;
+  transition: transform 0.15s ease;
+}
+
+.folder-toggle[aria-expanded='true']::before {
+  transform: rotate(90deg);
+}
+
+.folder-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-print {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.folder-print:hover,
+.folder-print:focus-visible {
+  background: var(--panel-2);
+  color: var(--accent);
+}
+
+.folder-print svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.folder-count {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.folder > .song-items {
+  margin-left: 11px;
+  padding-left: 6px;
+  border-left: 1px solid var(--line);
+}
+
+.select-toggle {
+  flex: none;
+}
+
+.select-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.selection-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.selection-bar[hidden] {
+  display: none;
+}
+
+.selection-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.selection-actions .button {
+  flex: 1;
+}
+
+.selection-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .song-label {
@@ -596,6 +756,68 @@ input[type='radio'] {
   border-bottom: 1px solid var(--line);
 }
 
+.clipboard-row {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.clipboard-row .button:disabled {
+  cursor: default;
+}
+
+.dialog {
+  width: min(400px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.dialog::backdrop {
+  background: rgb(10 12 18 / 0.45);
+}
+
+.dialog h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.dialog > form > .hint {
+  margin-bottom: 16px;
+}
+
+.paste-groups {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+}
+
+.paste-groups .check {
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.paste-groups .check input {
+  margin-top: 3px;
+}
+
+.paste-groups small {
+  display: block;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
 .group h2 {
   margin: 0 0 12px;
   font-size: 12px;
@@ -646,7 +868,7 @@ input[type='radio'] {
 
 .section-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 8px;
   padding: 5px 0;
@@ -772,20 +994,35 @@ kbd {
 
 /* ---------- Sheet (shared by preview and print) ---------- */
 
+/* The preview shows real A4 pages: a full page fills its columns top to
+   bottom and the rest flows onto the next page (see paginate()). */
+.sheet-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 210mm;
+  transform-origin: top left;
+}
+
 .sheet {
   width: 210mm;
-  min-height: 297mm;
+  height: 297mm;
   padding: var(--margin, 12mm);
   background: var(--paper);
   color: var(--paper-ink);
   box-shadow: var(--shadow);
-  transform-origin: top left;
+  column-fill: auto;
   column-count: var(--columns, 2);
   column-gap: 12mm;
   column-rule: 1px solid var(--paper-rule);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--lyric-size, 12px);
   line-height: 1.25;
+}
+
+/* The last page shares its content evenly between the columns. */
+.sheet.last {
+  column-fill: balance;
 }
 
 .sheet-header {
@@ -822,7 +1059,7 @@ kbd {
 
 .block:first-of-type,
 .block.continuation {
-  margin-top: calc(var(--section-gap, 2em) / 2);
+  margin-top: 1em;
 }
 
 .sheet-banner {
@@ -864,13 +1101,13 @@ kbd {
 }
 
 /* Paragraphs of a section (split by blank lines) stay whole; the space
-   between them matches a continuation's. */
+   between them matches a continuation's and does not follow the section gap. */
 .paragraph {
   break-inside: avoid;
 }
 
 .paragraph + .paragraph {
-  margin-top: calc(var(--section-gap, 2em) / 2);
+  margin-top: 1em;
 }
 
 .pair {
@@ -1064,6 +1301,14 @@ kbd {
 
 /* ---------- Print: A4, only the sheet, columns flow across pages ---------- */
 
+/* Laid out off screen so its sheets can be split into pages before printing. */
+.batch-print {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  visibility: hidden;
+}
+
 @page {
   size: A4;
   margin: 12mm;
@@ -1107,18 +1352,38 @@ kbd {
     height: auto !important;
   }
 
+  .sheet-pages {
+    display: block;
+    width: auto;
+    transform: none !important;
+  }
+
+  /* Each preview page is one printed page. Its content already fits, so it is
+     balanced rather than given a fixed height that rounding could overflow. */
   .sheet {
     width: auto;
-    min-height: 0;
+    height: auto;
     padding: 0;
     box-shadow: none;
-    transform: none !important;
-    /* Same as the preview: columns share the content evenly. In print only the
-       last page is balanced, earlier pages fill to the bottom. */
     column-fill: balance;
+  }
+
+  .sheet-pages > .sheet:not(:last-child),
+  .batch-print > .sheet:not(:last-child) {
+    break-after: page;
   }
 
   .sheet {
     background: #fff;
+  }
+
+  /* Printing a folder: only its sheets, each song on a new page. */
+  body.batch-printing .app {
+    display: none;
+  }
+
+  body.batch-printing .batch-print {
+    position: static;
+    visibility: visible;
   }
 }

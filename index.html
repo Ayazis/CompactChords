@@ -37,9 +37,23 @@
         <div class="library-head">
           <label class="sr-only" for="search">Search songs</label>
           <input id="search" class="search" type="search" placeholder="Search songs  /" autocomplete="off" />
+          <button id="select-songs" class="icon-button select-toggle" type="button" aria-pressed="false" title="Select songs to paste settings or move to a folder (Ctrl+click a song)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9" /></svg>
+            <span class="sr-only">Select songs</span>
+          </button>
           <button id="new-song" class="button" type="button" title="Start a new song">New</button>
         </div>
         <nav id="song-list" class="song-list" aria-label="Songs"></nav>
+        <div id="selection-bar" class="selection-bar" hidden>
+          <div class="selection-head">
+            <span id="selection-count" class="selection-count" aria-live="polite">0 selected</span>
+            <button id="done-selecting" class="button ghost small" type="button">Done</button>
+          </div>
+          <div class="selection-actions">
+            <button id="paste-selected" class="button small" type="button" title="Paste the copied settings into the selected songs">Paste settings</button>
+            <button id="move-selected" class="button small" type="button">Move to folder</button>
+          </div>
+        </div>
 
         <details class="import-box" id="import-box">
           <summary>Import &amp; backup</summary>
@@ -78,12 +92,18 @@
         </section>
         <div class="preview" id="preview">
           <div class="sheet-frame" id="sheet-frame">
-            <article id="sheet" class="sheet" aria-label="Print preview"></article>
+            <div id="sheet-pages" class="sheet-pages">
+              <article id="sheet" class="sheet" aria-label="Print preview"></article>
+            </div>
           </div>
         </div>
       </main>
 
       <aside class="panel settings" id="settings" aria-label="Sheet settings">
+        <div class="clipboard-row">
+          <button id="copy-settings" class="button ghost small" type="button" title="Copy this sheet's settings to paste into other songs">Copy settings</button>
+          <button id="paste-settings" class="button ghost small" type="button" title="Paste copied settings into this sheet" disabled>Paste settings</button>
+        </div>
         <section class="group">
           <h2>Key</h2>
           <div class="field">
@@ -137,7 +157,7 @@
           </div>
           <div class="field">
             <label for="section-gap">Space between sections <output id="section-gap-value"></output></label>
-            <input id="section-gap" type="range" min="0" max="3" step="0.1" />
+            <input id="section-gap" type="range" min="0" max="6" step="0.1" />
           </div>
           <div class="field two">
             <label for="chord-color">Chord colour</label>
@@ -192,11 +212,52 @@
             <dt><kbd>Ctrl</kbd> <kbd>E</kbd></dt><dd>Edit text</dd>
             <dt><kbd>Alt</kbd> <kbd>↑</kbd> / <kbd>↓</kbd></dt><dd>Transpose</dd>
             <dt><kbd>/</kbd></dt><dd>Search songs</dd>
+            <dt><kbd>Ctrl</kbd> click</dt><dd>Select songs</dd>
+            <dt><kbd>Shift</kbd> click</dt><dd>Select a range</dd>
           </dl>
         </details>
       </aside>
       <div class="scrim" id="scrim" hidden></div>
     </div>
+
+    <dialog id="paste-dialog" class="dialog" aria-labelledby="paste-title">
+      <form id="paste-form">
+        <h2 id="paste-title">Paste settings</h2>
+        <p id="paste-summary" class="hint"></p>
+        <fieldset class="paste-groups">
+          <legend class="sr-only">Settings to paste</legend>
+          <label class="check"><input type="checkbox" name="paste-group" value="sizes" /> <span>Text sizes <small>chord and lyric size</small></span></label>
+          <label class="check"><input type="checkbox" name="paste-group" value="layout" /> <span>Layout <small>columns, spacing, chord colour, tablature</small></span></label>
+          <label class="check"><input type="checkbox" name="paste-group" value="banners" /> <span>Header &amp; footer</span></label>
+          <label class="check"><input type="checkbox" name="paste-group" value="key" /> <span>Key &amp; capo <small>transpose, key, capo, accidentals, Nashville</small></span></label>
+          <label class="check"><input type="checkbox" name="paste-group" value="sections" /> <span>Sections <small>hidden, chordless and header-only sections, by position</small></span></label>
+        </fieldset>
+        <div class="dialog-actions">
+          <button id="paste-cancel" class="button ghost" type="button">Cancel</button>
+          <button class="button primary" type="submit">Paste</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="folder-dialog" class="dialog" aria-labelledby="folder-title">
+      <form id="folder-form">
+        <h2 id="folder-title">Move to folder</h2>
+        <p id="folder-summary" class="hint"></p>
+        <div class="field">
+          <label for="folder-name">Folder</label>
+          <input id="folder-name" type="text" maxlength="60" list="folder-names" placeholder="e.g. Gig set" autocomplete="off" />
+          <datalist id="folder-names"></datalist>
+          <p class="hint">Pick a folder or type a new name. Leave it empty to take the songs out of their folder.</p>
+        </div>
+        <div class="dialog-actions">
+          <button id="folder-cancel" class="button ghost" type="button">Cancel</button>
+          <button class="button primary" type="submit">Move</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Filled only while printing a whole folder: one sheet per song. -->
+    <div id="batch-print" class="batch-print" hidden></div>
 
     <script type="module" src="/src/app/main.ts"></script>
   </body>

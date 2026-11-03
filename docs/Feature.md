@@ -7,8 +7,9 @@ The application condenses verbose chord sheets into compact, print-ready A4 layo
 - As a guitarist, I paste a chord sheet and get an A4 print preview with chords recognized and sized separately from lyrics.
 - As a user, I can tune chord and lyric font sizes independently, choose 1–3 columns, or let the app fit the song on one page.
 - As a singer, I transpose a song to my key; as a guitarist, I set a capo and see the shapes to play.
-- As a band member, I hide sections we skip, or the chords of sections I know by heart.
+- As a band member, I hide sections we skip, the chords of sections I know by heart, or shorten a repeated chorus to just its header.
 - As a user, I send a song from a tab site to the app with one click, and keep my versions in a library I can back up.
+- As a band member, I sort songs into folders (a set list, practice) and give a whole folder the same layout by pasting one sheet's settings into it, then print the whole folder at once.
 
 ## Out of scope
 Authentication; cloud sync (export/import covers moving between devices); chord diagrams; PDF engine beyond browser print.

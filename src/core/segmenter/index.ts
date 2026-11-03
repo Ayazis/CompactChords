@@ -17,7 +17,7 @@ export function segment(lines: Line[]): Block[] {
   let pendingBlank: Line | undefined;
 
   const open = (title?: string): Block => {
-    const block: Block = { id: `B${paragraphs++}`, lines: [], meta: { showChords: true, visible: true } };
+    const block: Block = { id: `B${paragraphs++}`, lines: [], meta: { showChords: true, visible: true, headerOnly: false } };
     if (title !== undefined) block.title = title;
     blocks.push(block);
     return block;

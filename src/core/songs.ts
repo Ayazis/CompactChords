@@ -21,6 +21,8 @@ export interface SheetSettings {
   hiddenBlocks: string[];
   /** Ids of blocks printed without chords. */
   chordlessBlocks: string[];
+  /** Ids of titled blocks printed as their header alone (a repeat marker). */
+  headerOnlyBlocks: string[];
   /** "auto" follows the theme; otherwise a #rrggbb colour for chords. */
   chordColor: 'auto' | string;
   /** Space between sections, in em of the lyric size. */
@@ -42,6 +44,7 @@ export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
   nashville: false,
   hiddenBlocks: [],
   chordlessBlocks: [],
+  headerOnlyBlocks: [],
   chordColor: 'auto',
   sectionGap: 2,
   headerText: '',
@@ -49,13 +52,47 @@ export const DEFAULT_SHEET_SETTINGS: SheetSettings = {
 };
 
 export const SIZE_RANGE = { min: 6, max: 24 };
-export const SECTION_GAP_RANGE = { min: 0, max: 3 };
+export const SECTION_GAP_RANGE = { min: 0, max: 6 };
 export const BANNER_MAX = 200;
+export const FOLDER_MAX = 60;
+
+/** Settings that are copied together from one song to others. */
+export const SETTING_GROUPS = {
+  sizes: ['chordPx', 'lyricPx'],
+  layout: ['columns', 'sectionGap', 'showTabs', 'chordColor'],
+  banners: ['headerText', 'footerText'],
+  key: ['transpose', 'capo', 'key', 'accidentals', 'nashville'],
+  sections: ['hiddenBlocks', 'chordlessBlocks', 'headerOnlyBlocks'],
+} as const satisfies Record<string, readonly (keyof SheetSettings)[]>;
+
+export type SettingGroup = keyof typeof SETTING_GROUPS;
+
+/** What most songs can share; key and sections usually belong to one song. */
+export const DEFAULT_PASTE_GROUPS: SettingGroup[] = ['sizes', 'layout', 'banners'];
+
+export const isSettingGroup = (value: unknown): value is SettingGroup =>
+  typeof value === 'string' && Object.hasOwn(SETTING_GROUPS, value);
+
+/** The target settings with the chosen groups taken from the source. */
+export function pasteSettings(target: SheetSettings, source: SheetSettings, groups: readonly SettingGroup[]): SheetSettings {
+  const result = structuredClone(target) as unknown as Record<string, unknown>;
+  for (const group of groups) {
+    for (const name of SETTING_GROUPS[group]) result[name] = structuredClone(source[name]);
+  }
+  return result as unknown as SheetSettings;
+}
+
+/** Folder name as typed: trimmed, inner whitespace collapsed; "" means no folder. */
+export function cleanFolderName(name: string): string {
+  return name.replace(/[\p{Cc}\s]+/gu, ' ').trim().slice(0, FOLDER_MAX).trim();
+}
 
 export interface StoredSong {
   id: string;
   /** Tab-site link the song came from, if any. */
   url?: string;
+  /** Library folder; songs without one sit at the top level. */
+  folder?: string;
   title: string;
   details: string;
   text: string;
@@ -118,6 +155,7 @@ const RULES: { [K in keyof SheetSettings]: (value: unknown) => boolean } = {
   nashville: (value) => typeof value === 'boolean',
   hiddenBlocks: isBlockIds,
   chordlessBlocks: isBlockIds,
+  headerOnlyBlocks: isBlockIds,
   chordColor: (value) => value === 'auto' || (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)),
   sectionGap: (value) => typeof value === 'number' && value >= SECTION_GAP_RANGE.min && value <= SECTION_GAP_RANGE.max,
   headerText: isBanner,
@@ -166,6 +204,9 @@ export function parseStoredSong(value: unknown): StoredSong | undefined {
     savedAt: typeof song.savedAt === 'string' ? song.savedAt : new Date(0).toISOString(),
   };
   if (song.url) stored.url = song.url as string;
+  // A bad folder name only loses the folder, not the song.
+  const folder = typeof song.folder === 'string' ? cleanFolderName(song.folder) : '';
+  if (folder) stored.folder = folder;
   return stored;
 }
 
