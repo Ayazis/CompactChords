@@ -420,6 +420,25 @@ describe('sheet settings', () => {
     expect(verseBlock.textContent).toContain('Paper lanterns');
   });
 
+  it('shortens a section to its header', async () => {
+    const app = await bootApp();
+    const verse = app.$<HTMLInputElement>('input[data-block="B1"][data-role="header"]');
+    expect(verse.checked).toBe(false);
+    verse.checked = true;
+    verse.dispatchEvent(new Event('change', { bubbles: true }));
+    await app.settle();
+    const verseBlock = app.$$('.block').find((block) => block.querySelector('.block-title')?.textContent === 'Verse 1')!;
+    expect(verseBlock.querySelector('.row')).toBeNull();
+    expect(app.$<HTMLInputElement>('input[data-block="B1"][data-role="header"]').checked).toBe(true);
+    expect(app.$<HTMLInputElement>('input[data-block="B1"][data-role="chords"]').disabled).toBe(true);
+
+    const again = app.$<HTMLInputElement>('input[data-block="B1"][data-role="header"]');
+    again.checked = false;
+    again.dispatchEvent(new Event('change', { bubbles: true }));
+    await app.settle();
+    expect(app.$$('.block').find((block) => block.querySelector('.block-title')?.textContent === 'Verse 1')!.textContent).toContain('Paper lanterns');
+  });
+
   it('keeps keyboard focus on the toggled control', async () => {
     const app = await bootApp();
     const box = app.$<HTMLInputElement>('input[data-block="B1"][data-role="chords"]');

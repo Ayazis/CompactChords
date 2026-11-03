@@ -24,6 +24,7 @@ const settings = {
   nashville: false,
   hiddenBlocks: ['B2'],
   chordlessBlocks: ['B0', 'B4'],
+  headerOnlyBlocks: ['B3'],
   chordColor: '#aa3366',
   sectionGap: 1.5,
   headerText: 'The Band',

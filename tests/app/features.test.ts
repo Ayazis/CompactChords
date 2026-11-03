@@ -81,10 +81,19 @@ describe('space between sections', () => {
     expect(app.$<HTMLInputElement>('#section-gap').value).toBe('0');
   });
 
-  it('is used by the stylesheet for blocks and continuations', () => {
+  it('is used by the stylesheet between sections only, not for blank lines inside them', () => {
     const css = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../src/ui/style.css'), 'utf8') as string;
     expect(css).toMatch(/\.block\s*{[^}]*margin-top:\s*var\(--section-gap/);
-    expect(css).toMatch(/\.block\.continuation\s*{[^}]*var\(--section-gap/);
+    expect(css).toMatch(/\.block\.continuation\s*{[^}]*margin-top:\s*1em/);
+    expect(css).toMatch(/\.paragraph \+ \.paragraph\s*{[^}]*margin-top:\s*1em/);
+    expect(css.match(/--section-gap/g)).toHaveLength(1);
+  });
+
+  it('goes up to 6em', async () => {
+    const app = await bootApp();
+    expect(app.$<HTMLInputElement>('#section-gap').max).toBe('6');
+    await set(app, '#section-gap', '6');
+    expect(app.$('#sheet').style.getPropertyValue('--section-gap')).toBe('6em');
   });
 });
 
@@ -211,12 +220,12 @@ describe('settings validation for the new options', () => {
 
   it('accepts valid values', () => {
     expect(ok({ chordColor: '#FFaa00', sectionGap: 0, headerText: 'x'.repeat(200), footerText: '' })).toBeDefined();
-    expect(ok({ sectionGap: 3 })).toBeDefined();
+    expect(ok({ sectionGap: 6 })).toBeDefined();
   });
 
   it.each([
     ['chordColor', 'red'], ['chordColor', '#fff'], ['chordColor', '#gggggg'], ['chordColor', 'url(x)'], ['chordColor', 5],
-    ['sectionGap', -0.1], ['sectionGap', 3.1], ['sectionGap', NaN], ['sectionGap', '1'],
+    ['sectionGap', -0.1], ['sectionGap', 6.1], ['sectionGap', NaN], ['sectionGap', '1'],
     ['headerText', 'x'.repeat(201)], ['footerText', 5], ['headerText', null],
   ])('rejects %s = %p', (field, value) => {
     expect(ok({ [field]: value })).toBeUndefined();

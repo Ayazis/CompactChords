@@ -36,6 +36,13 @@ export function putSong(song: StoredSong): StoredSong[] {
   return songs;
 }
 
+/** Changes the songs with the given ids in one write. */
+export function updateSongs(ids: ReadonlySet<string>, change: (song: StoredSong) => StoredSong): StoredSong[] {
+  const songs = readLibrary().map((song) => (ids.has(song.id) ? change(song) : song));
+  writeLibrary(songs);
+  return songs;
+}
+
 export function removeSong(id: string): StoredSong[] {
   const songs = readLibrary().filter((song) => song.id !== id);
   writeLibrary(songs);

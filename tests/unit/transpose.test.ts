@@ -1,4 +1,4 @@
-import { arrange, parseLines, parseSheet } from '../../src/core';
+import { arrange, format, parseLines, parseSheet } from '../../src/core';
 import { parseChord } from '../../src/core/chord-grammar';
 import { DEFAULT_SHEET_SETTINGS, type SheetSettings } from '../../src/core/songs';
 import {
@@ -153,9 +153,20 @@ describe('arrange', () => {
   it('applies hidden and chordless sections', () => {
     const doc = arrange(parseSheet('[A]\nG\nla\n\n[B]\nC\nla'), settings({ hiddenBlocks: ['B0'], chordlessBlocks: ['B1'] })).doc;
     expect(doc.blocks.map((b) => b.meta)).toEqual([
-      { visible: false, showChords: true },
-      { visible: true, showChords: false },
+      { visible: false, showChords: true, headerOnly: false },
+      { visible: true, showChords: false, headerOnly: false },
     ]);
+  });
+
+  it('applies header-only sections, but only to sections with a header', () => {
+    const doc = arrange(parseSheet('untitled\n\n[A]\nG\nla'), settings({ headerOnlyBlocks: ['B0', 'B1'] })).doc;
+    expect(doc.blocks.map((b) => b.meta.headerOnly)).toEqual([false, true]);
+    expect(format(doc, { showTabs: true }).map((b) => [b.title, b.rows.length])).toEqual([[undefined, 1], ['A', 0]]);
+  });
+
+  it('keeps a header-only section whose content is hidden tablature', () => {
+    const doc = arrange(parseSheet('[Solo]\ne|--0--|\nB|--1--|'), settings({ headerOnlyBlocks: ['B0'] })).doc;
+    expect(format(doc, { showTabs: false }).map((b) => b.title)).toEqual(['Solo']);
   });
 });
 

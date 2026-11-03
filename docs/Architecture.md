@@ -53,7 +53,8 @@ text → normalizer → tokenizer → classifier → segmenter → arrange → f
 - Sheet settings (saved per song)
   ```
   { chordPx, lyricPx, showTabs, columns: 1|2|3, transpose: -11..11, capo: 0..11,
-    accidentals: "auto"|"sharp"|"flat", hiddenBlocks: string[], chordlessBlocks: string[] }
+    accidentals: "auto"|"sharp"|"flat", hiddenBlocks: string[], chordlessBlocks: string[],
+    headerOnlyBlocks: string[], sectionGap: 0..6 (em), ... }
   ```
 - Stored song
   ```

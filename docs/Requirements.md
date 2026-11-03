@@ -13,11 +13,13 @@
 - FR-10 Capo: chords are shown as shapes relative to the capo fret.
 - FR-11 Accidentals: automatic (from the key), sharps or flats.
 - FR-12 Detect and show the key: original, sounding (after transposing) and shapes (with a capo).
-- FR-13 Hide a section, or only its chords (formerly FR-N1 and FR-N2).
+- FR-13 Hide a section, only its chords, or print just its header as a repeat marker (formerly FR-N1 and FR-N2).
 - FR-14 "Fit to one page": the largest text size that fits on one A4 page, preferring sizes where no lyric line wraps.
 - FR-15 Export the library to a JSON file and import it again (merged by song id).
 - FR-16 Warn before discarding unsaved changes (switching songs, closing the tab).
 - FR-17 Keyboard shortcuts: Ctrl+S save, Ctrl+E editor, Alt+↑/↓ transpose, / search.
+- FR-18 Library folders: select songs (one by one, Ctrl+click, Shift+click ranges or a whole folder) and move them into a folder, rename it or take them out again. Folders can be collapsed, travel with export/import, and print as a whole (each song on its own pages, with its own settings).
+- FR-19 Copy the open sheet's settings and paste chosen groups (text sizes, layout, header & footer, key & capo, sections) into the open song or into all selected songs at once.
 
 ## Quality attributes (NFR)
 - NFR-01 Deterministic parsing; no network access in the core.

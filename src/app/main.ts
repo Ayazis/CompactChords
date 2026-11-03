@@ -5,22 +5,31 @@ import example from '../fixtures/example-01.txt?raw';
 import { arrange, format, parseSheet, type Arrangement, type SheetDocument } from '../core';
 import { sheetFromShared, type SharedSheet } from '../core/importers/tab-site';
 import {
+  cleanFolderName,
+  DEFAULT_PASTE_GROUPS,
   DEFAULT_SHEET_SETTINGS,
+  isSettingGroup,
+  parseSettings,
+  pasteSettings,
   SIZE_RANGE,
   songIdForTitle,
   songIdForUrl,
+  type SettingGroup,
   type SheetSettings,
   type StoredSong,
 } from '../core/songs';
 import { importFromUrl, loadListedSongs, printSheet, type ListedSong } from '../platform';
 import { bookmarkletHref, IMPORT_HASH, takeImportPayload } from '../platform/bookmarklet';
-import { exportLibrary, importLibrary, putSong, readLibrary, removeSong } from '../platform/library';
-import { renderSections, renderSongList, type SongGroup } from '../ui/panels';
-import { DEFAULT_SETTINGS, renderSheet } from '../ui/render';
+import { exportLibrary, importLibrary, putSong, readLibrary, removeSong, updateSongs } from '../platform/library';
+import { renderSections, renderSongList, type SongFolder, type SongGroup } from '../ui/panels';
+import { DEFAULT_SETTINGS, el, renderSheet } from '../ui/render';
 
 const EXAMPLE_KEY = 'example';
 const LAST_OPENED_KEY = 'compact-chords.last-opened';
 const THEME_KEY = 'compact-chords.theme';
+const COPIED_KEY = 'compact-chords.copied-settings';
+const PASTE_GROUPS_KEY = 'compact-chords.paste-groups';
+const COLLAPSED_KEY = 'compact-chords.collapsed-folders';
 const DEFAULT_CHORD_COLOR = '#1f3fb0';
 const PAGE_CONTENT_MM = 297 - 2 * DEFAULT_SETTINGS.marginMm;
 const PX_PER_MM = 96 / 25.4;
@@ -29,6 +38,7 @@ interface Song {
   /** Library id: set once saved, or up front for songs from a link. */
   id?: string;
   url?: string;
+  folder?: string;
   title: string;
   details: string;
   text: string;
@@ -45,6 +55,18 @@ interface State {
   lists?: ListedSong[];
   doc: SheetDocument;
   arrangement?: Arrangement;
+  /** Ids of the library songs picked while selecting; undefined when not selecting. */
+  selected?: Set<string>;
+  /** Last song clicked while selecting, where a Shift+click range starts. */
+  selectAnchor?: string;
+  collapsed: Set<string>;
+  copied?: CopiedSettings;
+}
+
+interface CopiedSettings {
+  settings: SheetSettings;
+  /** Title of the song they were copied from. */
+  from: string;
 }
 
 const state: State = {
@@ -53,10 +75,36 @@ const state: State = {
   isExample: false,
   library: readLibrary(),
   doc: { blocks: [] },
+  collapsed: new Set(
+    readPref(COLLAPSED_KEY, (value) => (Array.isArray(value) ? value.filter((name): name is string => typeof name === 'string') : undefined)),
+  ),
+  copied: readPref(COPIED_KEY, (value) => {
+    const copied = value as Partial<CopiedSettings> | null;
+    const settings = parseSettings(copied?.settings);
+    return settings && typeof copied?.from === 'string' ? { settings, from: copied.from } : undefined;
+  }),
 };
+
+/** Per-browser conveniences in localStorage; losing them only costs a click. */
+function readPref<T>(key: string, parse: (value: unknown) => T | undefined): T | undefined {
+  try {
+    return parse(JSON.parse(localStorage.getItem(key) ?? 'null'));
+  } catch {
+    return undefined;
+  }
+}
+
+function writePref(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // The preference still applies for this visit.
+  }
+}
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const sheet = $<HTMLElement>('sheet');
+const batchPrint = $<HTMLElement>('batch-print');
 const frame = $<HTMLElement>('sheet-frame');
 const preview = $<HTMLElement>('preview');
 const editor = $<HTMLElement>('editor');
@@ -88,6 +136,14 @@ const sectionGap = $<HTMLInputElement>('section-gap');
 const chordColor = $<HTMLInputElement>('chord-color');
 const headerText = $<HTMLInputElement>('header-text');
 const footerText = $<HTMLInputElement>('footer-text');
+const selectButton = $<HTMLButtonElement>('select-songs');
+const selectionBar = $<HTMLElement>('selection-bar');
+const pasteButton = $<HTMLButtonElement>('paste-settings');
+const pasteSelected = $<HTMLButtonElement>('paste-selected');
+const moveSelected = $<HTMLButtonElement>('move-selected');
+const pasteDialog = $<HTMLDialogElement>('paste-dialog');
+const folderDialog = $<HTMLDialogElement>('folder-dialog');
+const folderName = $<HTMLInputElement>('folder-name');
 
 // ---------- Status ----------
 
@@ -104,19 +160,25 @@ function setStatus(message: string, tone: 'info' | 'ok' | 'error' = 'info'): voi
 
 const inLibrary = (id: string | undefined) => id !== undefined && state.library.some((song) => song.id === id);
 
-function headingDetails(): string {
-  const { settings, details } = state.song;
-  const keyInfo = state.arrangement?.keys;
+function headingDetails(song: Song, arrangement: Arrangement | undefined): string {
+  const { settings, details } = song;
+  const keyInfo = arrangement?.keys;
   return [details, settings.capo ? `Capo ${settings.capo}` : '', keyInfo ? `Key ${keyInfo.sounding}` : '']
     .filter(Boolean)
     .join(' · ');
 }
 
+/** Renders a song's sheet into `root` and returns how it was arranged. */
+function drawSheet(root: HTMLElement, song: Song, doc = parseSheet(song.text)): Arrangement {
+  const arrangement = arrange(doc, song.settings);
+  const blocks = format(arrangement.doc, { showTabs: song.settings.showTabs });
+  renderSheet(root, blocks, { title: song.title, details: headingDetails(song, arrangement) }, { ...DEFAULT_SETTINGS, ...song.settings });
+  return arrangement;
+}
+
 function renderSheetView(): void {
   state.doc = parseSheet(state.song.text);
-  state.arrangement = arrange(state.doc, state.song.settings);
-  const blocks = format(state.arrangement.doc, { showTabs: state.song.settings.showTabs });
-  renderSheet(sheet, blocks, { title: state.song.title, details: headingDetails() }, { ...DEFAULT_SETTINGS, ...state.song.settings });
+  state.arrangement = drawSheet(sheet, state.song, state.doc);
 }
 
 /** Height of the sheet's content in mm, ignoring the A4 minimum height of the preview. */
@@ -147,13 +209,19 @@ function songGroups(): SongGroup[] {
       .filter(Boolean)
       .join(' · ') || undefined;
 
-  const mine = [...state.library]
-    .sort((a, b) => a.title.localeCompare(b.title))
-    .map((song) => {
-      const detail = summary(song.settings);
-      return { key: `song:${song.id}`, label: song.title || 'Untitled', ...(detail ? { detail } : {}) };
-    });
-  const groups: SongGroup[] = [{ name: 'My library', entries: mine, matchName: false }];
+  const loose: SongGroup['entries'] = [];
+  const folders = new Map<string, SongFolder>();
+  for (const song of [...state.library].sort((a, b) => a.title.localeCompare(b.title))) {
+    const detail = summary(song.settings);
+    const entry = { key: `song:${song.id}`, label: song.title || 'Untitled', ...(detail ? { detail } : {}) };
+    if (!song.folder) loose.push(entry);
+    else if (folders.has(song.folder)) folders.get(song.folder)!.entries.push(entry);
+    else folders.set(song.folder, { name: song.folder, entries: [entry] });
+  }
+  const sortedFolders = [...folders.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const groups: SongGroup[] = [{ name: 'My library', entries: loose, folders: sortedFolders, matchName: false }];
+  // Only library songs can be selected, so the other groups step aside meanwhile.
+  if (state.selected) return groups;
 
   const lists = new Map<string, SongGroup>();
   for (const listed of state.lists ?? []) {
@@ -175,10 +243,35 @@ function activeKey(): string | undefined {
   return state.song.url ? `link:${state.song.url}` : undefined;
 }
 
+function renderLibrary(): void {
+  // Songs removed or replaced by an import drop out of the selection.
+  for (const id of state.selected ?? []) if (!inLibrary(id)) state.selected!.delete(id);
+  const selected = state.selected && new Set([...state.selected].map((id) => `song:${id}`));
+  renderSongList(songList, songGroups(), activeKey(), search.value, { ...(selected ? { selected } : {}), collapsed: state.collapsed });
+
+  selectButton.setAttribute('aria-pressed', String(Boolean(state.selected)));
+  selectionBar.hidden = !state.selected;
+  const count = state.selected?.size ?? 0;
+  $('selection-count').textContent = `${count} selected`;
+  pasteSelected.disabled = count === 0 || !state.copied;
+  pasteSelected.title = state.copied
+    ? `Paste the settings copied from “${state.copied.from}” into the selected songs`
+    : 'Copy settings from a sheet first (in the sheet settings)';
+  moveSelected.disabled = count === 0;
+  pasteButton.disabled = !state.copied;
+  pasteButton.title = state.copied ? `Paste settings copied from “${state.copied.from}”` : 'Copy settings from a sheet first';
+}
+
 function renderPanels(): void {
   const { settings } = state.song;
-  renderSongList(songList, songGroups(), activeKey(), search.value);
-  renderSections(sections, state.doc.blocks, new Set(settings.hiddenBlocks), new Set(settings.chordlessBlocks));
+  renderLibrary();
+  renderSections(
+    sections,
+    state.doc.blocks,
+    new Set(settings.hiddenBlocks),
+    new Set(settings.chordlessBlocks),
+    new Set(settings.headerOnlyBlocks),
+  );
 
   $('transpose-value').textContent = formatShift(settings.transpose);
   $('chord-size-value').textContent = `${settings.chordPx}px`;
@@ -396,6 +489,7 @@ function save(): void {
     savedAt: new Date().toISOString(),
   };
   if (state.song.url) stored.url = state.song.url;
+  if (state.song.folder) stored.folder = state.song.folder;
   try {
     state.library = putSong(stored);
   } catch (error) {
@@ -426,6 +520,188 @@ function deleteCurrent(): void {
   refresh();
   updateAddress();
   setStatus(`Removed “${title}” from your library. It stays open; Save to add it back.`);
+}
+
+// ---------- Folders and selection ----------
+
+function toggleFolder(name: string): void {
+  if (!state.collapsed.delete(name)) state.collapsed.add(name);
+  writePref(COLLAPSED_KEY, [...state.collapsed]);
+  renderLibrary();
+}
+
+function setSelecting(on: boolean): void {
+  state.selected = on ? new Set() : undefined;
+  state.selectAnchor = undefined;
+  renderLibrary();
+}
+
+/** Ids of the selectable songs in list order, for Shift+click ranges. */
+const listedIds = () => [...songList.querySelectorAll<HTMLInputElement>('input[data-select]')].map((box) => box.dataset.select!.slice(5));
+
+function selectSong(id: string, on: boolean, range: boolean): void {
+  const selected = state.selected!;
+  const ids = listedIds();
+  const from = state.selectAnchor ? ids.indexOf(state.selectAnchor) : -1;
+  const to = ids.indexOf(id);
+  const span = range && from >= 0 && to >= 0 ? ids.slice(Math.min(from, to), Math.max(from, to) + 1) : [id];
+  for (const each of span) {
+    if (on) selected.add(each);
+    else selected.delete(each);
+  }
+  state.selectAnchor = id;
+  renderLibrary();
+}
+
+function selectFolder(name: string, on: boolean): void {
+  for (const song of state.library) {
+    if (song.folder !== name) continue;
+    if (on) state.selected!.add(song.id);
+    else state.selected!.delete(song.id);
+  }
+  renderLibrary();
+}
+
+const songCount = (count: number) => `${count} song${count === 1 ? '' : 's'}`;
+
+// jsdom and older browsers lack the modal API; an open attribute still shows the dialog.
+function openDialog(dialog: HTMLDialogElement): void {
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+}
+
+function closeDialog(dialog: HTMLDialogElement): void {
+  if (typeof dialog.close === 'function') dialog.close();
+  else dialog.removeAttribute('open');
+}
+
+function openFolderDialog(): void {
+  const ids = state.selected;
+  if (!ids?.size) return;
+  const songs = state.library.filter((song) => ids.has(song.id));
+  const folders = [...new Set(state.library.map((song) => song.folder).filter((name): name is string => Boolean(name)))].sort();
+  $('folder-names').replaceChildren(...folders.map((name) => new Option(name, name)));
+  const current = new Set(songs.map((song) => song.folder ?? ''));
+  folderName.value = current.size === 1 ? [...current][0]! : '';
+  $('folder-summary').textContent = `Move ${songCount(songs.length)}. To rename a folder, select all its songs and type the new name.`;
+  openDialog(folderDialog);
+  folderName.select();
+}
+
+function moveSelectedSongs(): void {
+  const ids = state.selected;
+  if (!ids?.size) return;
+  const name = cleanFolderName(folderName.value);
+  try {
+    state.library = updateSongs(ids, ({ folder: _folder, ...song }) => (name ? { ...song, folder: name } : song));
+  } catch (error) {
+    setStatus((error as Error).message, 'error');
+    return;
+  }
+  if (state.song.id && ids.has(state.song.id)) {
+    if (name) state.song.folder = name;
+    else delete state.song.folder;
+  }
+  // Show the songs where they went.
+  if (state.collapsed.delete(name)) writePref(COLLAPSED_KEY, [...state.collapsed]);
+  closeDialog(folderDialog);
+  renderLibrary();
+  setStatus(name ? `Moved ${songCount(ids.size)} to “${name}”.` : `Took ${songCount(ids.size)} out of their folder.`, 'ok');
+}
+
+/** Prints every song of a folder, each with its own settings, one after another. */
+function printFolder(name: string): void {
+  const songs = state.library
+    .filter((song) => song.folder === name)
+    .sort((a, b) => a.title.localeCompare(b.title))
+    // The open song prints as it is on screen, unsaved changes included.
+    .map((song): Song => (song.id === state.song.id ? state.song : song));
+  if (songs.length === 0) return;
+  batchPrint.replaceChildren(
+    ...songs.map((song) => {
+      const page = el('article', 'sheet');
+      drawSheet(page, song);
+      return page;
+    }),
+  );
+  document.body.classList.add('batch-printing');
+  window.addEventListener('afterprint', endBatchPrint, { once: true });
+  setStatus(`Printing ${songCount(songs.length)} from “${name}”.`, 'ok');
+  printSheet();
+}
+
+function endBatchPrint(): void {
+  document.body.classList.remove('batch-printing');
+  batchPrint.replaceChildren();
+}
+
+// ---------- Copying settings between songs ----------
+
+const GROUP_NAMES: Record<SettingGroup, string> = {
+  sizes: 'text sizes',
+  layout: 'layout',
+  banners: 'header & footer',
+  key: 'key & capo',
+  sections: 'sections',
+};
+
+let pasteTarget: 'open' | 'selected' = 'open';
+const pasteBoxes = () => [...document.querySelectorAll<HTMLInputElement>('input[name="paste-group"]')];
+
+function copySettings(): void {
+  state.copied = { settings: structuredClone(state.song.settings), from: state.song.title.trim() || 'Untitled song' };
+  writePref(COPIED_KEY, state.copied);
+  renderLibrary();
+  setStatus(`Copied the settings of “${state.copied.from}”. Paste them into another song, or select songs in the library.`, 'ok');
+}
+
+function openPasteDialog(target: typeof pasteTarget): void {
+  const copied = state.copied;
+  const count = state.selected?.size ?? 0;
+  if (!copied || (target === 'selected' && count === 0)) return;
+  pasteTarget = target;
+  const groups = readPref(PASTE_GROUPS_KEY, (value) => (Array.isArray(value) ? value.filter(isSettingGroup) : undefined)) ?? DEFAULT_PASTE_GROUPS;
+  for (const box of pasteBoxes()) box.checked = groups.includes(box.value as SettingGroup);
+  const into = target === 'open' ? `“${state.song.title.trim() || 'Untitled song'}”` : songCount(count);
+  $('paste-summary').textContent = `From “${copied.from}” into ${into}.`;
+  openDialog(pasteDialog);
+}
+
+function pasteChosen(): void {
+  const copied = state.copied;
+  const groups = pasteBoxes()
+    .filter((box) => box.checked)
+    .map((box) => box.value)
+    .filter(isSettingGroup);
+  if (!copied || groups.length === 0) {
+    setStatus('Choose which settings to paste.', 'error');
+    return;
+  }
+  writePref(PASTE_GROUPS_KEY, groups);
+  const what = groups.map((group) => GROUP_NAMES[group]).join(', ');
+  closeDialog(pasteDialog);
+
+  if (pasteTarget === 'open') {
+    changeSettings(pasteSettings(state.song.settings, copied.settings, groups));
+    setStatus(`Pasted ${what}. Save to keep them.`, 'ok');
+    return;
+  }
+
+  const ids = state.selected ?? new Set<string>();
+  const savedAt = new Date().toISOString();
+  try {
+    state.library = updateSongs(ids, (song) => ({ ...song, settings: pasteSettings(song.settings, copied.settings, groups), savedAt }));
+  } catch (error) {
+    setStatus((error as Error).message, 'error');
+    return;
+  }
+  // The open song follows its saved copy; its other unsaved edits stay unsaved.
+  if (state.song.id && ids.has(state.song.id)) {
+    state.song.settings = pasteSettings(state.song.settings, copied.settings, groups);
+    syncControls();
+  }
+  refresh();
+  setStatus(`Pasted ${what} into ${songCount(ids.size)}.`, 'ok');
 }
 
 // ---------- Layout helpers ----------
@@ -516,13 +792,31 @@ function fitToPage(): void {
 // ---------- Events ----------
 
 songList.addEventListener('click', async (event) => {
-  const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-key]');
-  if (!button || !confirmDiscard()) return;
-  await openKey(button.dataset.key!);
+  const target = event.target as HTMLElement;
+  const folder = target.closest<HTMLButtonElement>('button[data-folder]');
+  if (folder) return toggleFolder(folder.dataset.folder!);
+  const printButton = target.closest<HTMLButtonElement>('button[data-print-folder]');
+  if (printButton) return printFolder(printButton.dataset.printFolder!);
+  if (target instanceof HTMLInputElement && target.dataset.selectFolder !== undefined) {
+    return selectFolder(target.dataset.selectFolder, target.checked);
+  }
+  if (target instanceof HTMLInputElement && target.dataset.select) {
+    return selectSong(target.dataset.select.slice(5), target.checked, event.shiftKey);
+  }
+
+  const button = target.closest<HTMLButtonElement>('button[data-key]');
+  if (!button) return;
+  const key = button.dataset.key!;
+  if ((event.ctrlKey || event.metaKey) && key.startsWith('song:')) {
+    state.selected ??= new Set();
+    return selectSong(key.slice(5), true, false);
+  }
+  if (!confirmDiscard()) return;
+  await openKey(key);
   setDrawer(library, libraryToggle, false);
 });
 
-search.addEventListener('input', () => renderSongList(songList, songGroups(), activeKey(), search.value));
+search.addEventListener('input', renderLibrary);
 search.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') songList.querySelector<HTMLButtonElement>('button[data-key]')?.click();
 });
@@ -597,11 +891,12 @@ sections.addEventListener('change', (event) => {
   const box = event.target as HTMLInputElement;
   const id = box.dataset.block;
   if (!id) return;
-  const field = box.dataset.role === 'visible' ? 'hiddenBlocks' : 'chordlessBlocks';
+  const role = box.dataset.role;
+  const field = role === 'visible' ? 'hiddenBlocks' : role === 'header' ? 'headerOnlyBlocks' : 'chordlessBlocks';
   const ids = new Set(state.song.settings[field]);
-  // The checkbox says "show": checked means the id is not in the list.
-  if (box.checked) ids.delete(id);
-  else ids.add(id);
+  // "Show" and "Chords" are checked when the id is not in their list; "Header only" when it is.
+  if (box.checked === (role === 'header')) ids.add(id);
+  else ids.delete(id);
   changeSettings({ [field]: [...ids].sort() });
 });
 
@@ -611,6 +906,22 @@ urlForm.addEventListener('submit', (event) => {
 });
 
 $('new-song').addEventListener('click', newSong);
+selectButton.addEventListener('click', () => setSelecting(!state.selected));
+$('done-selecting').addEventListener('click', () => setSelecting(false));
+moveSelected.addEventListener('click', openFolderDialog);
+pasteSelected.addEventListener('click', () => openPasteDialog('selected'));
+$('copy-settings').addEventListener('click', copySettings);
+pasteButton.addEventListener('click', () => openPasteDialog('open'));
+$('paste-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  pasteChosen();
+});
+$('folder-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  moveSelectedSongs();
+});
+$('paste-cancel').addEventListener('click', () => closeDialog(pasteDialog));
+$('folder-cancel').addEventListener('click', () => closeDialog(folderDialog));
 saveButton.addEventListener('click', save);
 deleteButton.addEventListener('click', deleteCurrent);
 $('print').addEventListener('click', printSheet);
@@ -674,7 +985,10 @@ document.addEventListener('keydown', (event) => {
     setDrawer(library, libraryToggle, getComputedStyle(libraryToggle).display !== 'none');
     search.focus();
   } else if (event.key === 'Escape') {
-    closeDrawers();
+    // An open dialog closes on its own.
+    if (pasteDialog.hasAttribute('open') || folderDialog.hasAttribute('open')) return;
+    if (state.selected) setSelecting(false);
+    else closeDrawers();
   }
 });
 

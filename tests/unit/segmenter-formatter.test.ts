@@ -40,8 +40,8 @@ describe('segment', () => {
   it('gives blocks deterministic ids, visible with chords', () => {
     const blocks = segment(parseLines('G\n\nC'));
     expect(blocks.map((b) => [b.id, b.meta])).toEqual([
-      ['B0', { showChords: true, visible: true }],
-      ['B1', { showChords: true, visible: true }],
+      ['B0', { showChords: true, visible: true, headerOnly: false }],
+      ['B1', { showChords: true, visible: true, headerOnly: false }],
     ]);
   });
 });

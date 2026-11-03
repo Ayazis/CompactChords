@@ -20,7 +20,7 @@ export interface Block {
   id: string;
   title?: string;
   lines: Line[];
-  meta: { showChords: boolean; visible: boolean };
+  meta: { showChords: boolean; visible: boolean; headerOnly: boolean };
 }
 
 export interface SheetDocument {
