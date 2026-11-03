@@ -65,7 +65,9 @@ describe('print CSS (FR-05, AC-03, AC-04)', () => {
   const printRules = css.slice(css.indexOf('@media print'));
 
   it('prints on A4 with margins of at most 15 mm', () => {
-    const margin = /@page\s*{[^}]*size:\s*A4;[^}]*margin:\s*(\d+)mm/.exec(css);
+    // The sheet brings the preview's margins, so the page itself has none.
+    expect(css).toMatch(/@page\s*{[^}]*size:\s*A4;[^}]*margin:\s*0;/);
+    const margin = /\.sheet\s*{[^}]*padding:\s*var\(--margin,\s*(\d+)mm\)/.exec(printRules);
     expect(Number(margin?.[1])).toBeLessThanOrEqual(15);
   });
 

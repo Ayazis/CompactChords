@@ -10,7 +10,7 @@ export interface TextRun {
  * Reads the text positions of each page of a PDF printed by Chromium. Only
  * what Chromium (Skia) writes is supported: one content stream per page, and
  * each text object placed with "1 0 0 -1 x y Tm" in CSS pixels, then moved
- * with "dx dy Td".
+ * with "dx dy Td", inside a scaled and shifted "s 0 0 s dx dy cm".
  */
 export function readPdf(pdf: Buffer): TextRun[][] {
   const text = pdf.toString('latin1');
@@ -50,10 +50,14 @@ export function readPdf(pdf: Buffer): TextRun[][] {
     const runs: TextRun[] = [];
     let x = 0;
     let y = 0;
-    for (const op of contents(ref).matchAll(/1 0 0 -1 (-?[\d.]+) (-?[\d.]+) Tm|(-?[\d.]+) (-?[\d.]+) Td|\bTj\b|\bTJ\b/g)) {
-      if (op[1] !== undefined) [x, y] = [Number(op[1]), Number(op[2])];
-      else if (op[3] !== undefined) [x, y] = [x + Number(op[3]), y - Number(op[4])];
-      else runs.push({ x, y });
+    // Later pages are drawn shifted up past the pages before them ("s 0 0 s 0 -dy cm").
+    let dx = 0;
+    let dy = 0;
+    for (const op of contents(ref).matchAll(/([\d.]+) 0 0 \1 (-?[\d.]+) (-?[\d.]+) cm|1 0 0 -1 (-?[\d.]+) (-?[\d.]+) Tm|(-?[\d.]+) (-?[\d.]+) Td|\bTj\b|\bTJ\b/g)) {
+      if (op[1] !== undefined) [dx, dy] = [Number(op[2]) / Number(op[1]), Number(op[3]) / Number(op[1])];
+      else if (op[4] !== undefined) [x, y] = [Number(op[4]), Number(op[5])];
+      else if (op[6] !== undefined) [x, y] = [x + Number(op[6]), y - Number(op[7])];
+      else runs.push({ x: x + dx, y: y + dy });
     }
     return runs;
   });

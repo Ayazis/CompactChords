@@ -131,8 +131,52 @@ export function paginate(first: HTMLElement): HTMLElement[] {
     const rest = split(last);
     if (rest.length > 0) addPage(rest);
   }
-  for (const page of pages) page.classList.toggle('last', page === pages[pages.length - 1]);
+  for (const page of pages) {
+    page.classList.toggle('last', page === pages[pages.length - 1]);
+    markColumns(page);
+  }
   return pages;
+}
+
+/**
+ * Records where each column of a laid-out page starts, so print can force the
+ * same column breaks instead of choosing its own: `column-start` marks the
+ * first element of each later column, and a `column-filler` stands in for each
+ * column the page leaves empty.
+ */
+function markColumns(page: HTMLElement): void {
+  for (const node of page.querySelectorAll('.column-start')) node.classList.remove('column-start');
+  for (const node of page.querySelectorAll(':scope > .column-filler')) node.remove();
+  if (page.offsetWidth === 0) return;
+  const style = getComputedStyle(page);
+  const count = Number(style.columnCount) || 1;
+  const box = page.getBoundingClientRect();
+  const scale = box.width / page.offsetWidth;
+  const left = box.left + parseFloat(style.paddingLeft || '0') * scale;
+  const width = (page.offsetWidth - parseFloat(style.paddingLeft || '0') - parseFloat(style.paddingRight || '0')) * scale;
+  const pitch = (width + (parseFloat(style.columnGap) || 0) * scale) / count;
+  const columnOf = (rect: DOMRect) => Math.min(count - 1, Math.max(0, Math.floor((rect.left - left + 1) / pitch)));
+
+  let column = 0;
+  const walk = (parent: HTMLElement) => {
+    for (const child of parent.children as HTMLCollectionOf<HTMLElement>) {
+      // Banners and the header span all columns.
+      if (getComputedStyle(child).columnSpan === 'all') continue;
+      const rects = child.getClientRects();
+      if (rects.length === 0) continue;
+      const first = columnOf(rects[0]!);
+      if (first > column) {
+        child.classList.add('column-start');
+        column = first;
+      }
+      // A section or paragraph that continues in the next column breaks inside.
+      if (isSplittable(child) && columnOf(rects[rects.length - 1]!) > column) walk(child);
+    }
+  };
+  walk(page);
+
+  const footer = page.querySelector(':scope > .sheet-banner.bottom');
+  for (let empty = count - 1 - column; empty > 0; empty--) page.insertBefore(el('div', 'column-filler'), footer);
 }
 
 export function renderSheet(root: HTMLElement, blocks: RenderBlock[], heading: Heading, settings: UiSettings): void {
